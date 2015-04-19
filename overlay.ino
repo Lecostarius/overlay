@@ -73,10 +73,10 @@ void setup() {
     mx->write_0(c & 0xFF);
   }    
   char charA[128];
-  mx->read_character(0x42, charA); // first param: which char to read
-  for (int i=0; i < 32; i++) {
-    Serial.print("char "); Serial.print(i); Serial.print(" is "); Serial.println((int)charA[i]);
-  }
+//  mx->read_character(0x42, charA); // first param: which char to read
+//  for (int i=0; i < 32; i++) {
+//    Serial.print("char "); Serial.print(i); Serial.print(" is "); Serial.println((int)charA[i]);
+//  }
 }
 
 void loop() {
