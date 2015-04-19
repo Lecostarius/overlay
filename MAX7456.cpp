@@ -436,25 +436,25 @@ void MAX7456::read_character(byte addr, char character[])
   SPCR = MAX7456_SPCR;  // set SPCR to what we need
 
   digitalWrite(_slave_select, LOW);
-  //Serial.println("Enable SPI");
+  Serial.println("Enable SPI");
   MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  //Serial.println("Sent VM0_WRITE_ADDR");
+  Serial.println("Sent VM0_WRITE_ADDR");
   MAX7456_spi_transfer(0x00|VERTICAL_SYNC_NEXT_VSYNC); // double check that the other bits can be zero
-  //delay(100); // Not sure if this delay is needed. It's used in the init code
+  delay(100); // Not sure if this delay is needed. It's used in the init code
   
-  //Serial.println("Select character by address");
+  Serial.println("Select character by address");
   // Write CMAH[7:0]  = xxH  to select the character (0â€“255) to be read
   MAX7456_spi_transfer(CMAH_WRITE_ADDR);
   MAX7456_spi_transfer(addr);
 
-  //Serial.println("Read character data from NVRAM to Shadow RAM");
+  Serial.println("Read character data from NVRAM to Shadow RAM");
   // Write CMM[7:0] = 0101xxxx to read the character data from the NVM to the shadow RAM
   MAX7456_spi_transfer(CMM_WRITE_ADDR);
   MAX7456_spi_transfer(0b01010000); // Double check that bits 0-3 can be zero
   
-  char test[54];
+  char test[64];
 
-  for(int i = 0; i < 64; i++)
+  for(int i = 0; i < 54; i++)
   {
     // Write CMAL[7:0] = xxH to select the 4-pixel byte (0â€“63) in the character to be read
     MAX7456_spi_transfer(CMAL_WRITE_ADDR);
@@ -471,7 +471,7 @@ void MAX7456::read_character(byte addr, char character[])
   
   digitalWrite(_slave_select, HIGH);
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
-  /*Serial.println("Done reading. Data collected.");
+  Serial.println("Done reading. Data collected.");
   
   Serial.println("Character: ");
   for(int i = 0; i < 54; i++) {
@@ -487,7 +487,7 @@ void MAX7456::read_character(byte addr, char character[])
     Serial.print(",");
   }
   Serial.println();
-  */
+  
 }
 
 
