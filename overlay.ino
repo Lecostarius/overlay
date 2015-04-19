@@ -43,7 +43,7 @@ void SPI_MasterInit() {
 
 void setup() {
   Serial.begin(115200);
-  Serial.println('overlay code started\n');
+  Serial.println("overlay code started\n");
   // put your setup code here, to run once:
     // initialize the digital pin as an output.
   SPI_MasterInit();
@@ -69,15 +69,15 @@ void setup() {
     mx->write_0(c & 0xFF);
   }    
   char charA[128];
-  mx->read_character(0x01, charA); // first param: which char to read
+  mx->read_character(0x02, charA); // first param: which char to read
   for (int i=0; i < 32; i++) {
-    Serial.print("char is "); Serial.println(charA[i]);
+    Serial.print("char "); Serial.print(i); Serial.print(" is "); Serial.println((int)charA[i]);
   }
 }
 
 void loop() {
   byte c;
-
+  Serial.println("Loop!\n");
   // put your main code here, to run repeatedly: 
   digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
   //digitalWrite(MAX7456SELECT,HIGH);
