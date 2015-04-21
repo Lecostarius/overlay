@@ -29,7 +29,7 @@ void SPI_MasterInit() {
   // DORD = Data order (1=LSB first)
   // MSTR = microcontroller is Master(1)/Slave(0)
   // CPOL = Clock polarity (1 means, SCK is high when idle). For the MAX7456, SCK is low when idle, so this must be 0.
-  // CPHA = clock phase (complex, see p 197 ff in datasheet). For write operations, this must be 0. For read, it must be 1.
+  // CPHA = clock phase (complex, see p 197 ff in datasheet). Since we want to sample on the rising edge, this must be 0 if CPOL is 0.
   // SPR1, SPR0 - speed divider:
   // SPR1  SPR0  divider  @16Mhz
   //  0      0      4      4 MHz
@@ -73,15 +73,16 @@ void setup() {
     mx->write_0(c & 0xFF);
   }    
   char charA[128];
-//  mx->read_character(0x42, charA); // first param: which char to read
-//  for (int i=0; i < 32; i++) {
-//    Serial.print("char "); Serial.print(i); Serial.print(" is "); Serial.println((int)charA[i]);
-//  }
+  //mx->read_character(0x42, charA); // first param: which char to read
+  //for (int i=0; i < 32; i++) {
+  //  Serial.print("char "); Serial.print(i); Serial.print(" is "); Serial.println((int)charA[i]);
+  //}
 }
 
 void loop() {
   byte c;
-  Serial.println("Loop!\n");
+  int x;
+  //Serial.println("Loop!");
   // put your main code here, to run repeatedly: 
   digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
   //digitalWrite(MAX7456SELECT,HIGH);
@@ -89,16 +90,31 @@ void loop() {
   //digitalWrite(MAX7456_DATAOUT,HIGH);
   delay(250);               // wait for a second
   
-  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(0<<SPR0);
+  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
   delay(1);
   digitalWrite(MAX7456SELECT,LOW); 
   MAX7456_spi_transfer(0x80); // read status register
   SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(1<<CPHA)|(0<<SPR1)|(1<<SPR0);
   c = MAX7456_spi_transfer(0x00); // dont care what I send, this is reading
-  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(0<<SPR0);
+  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
   digitalWrite(MAX7456SELECT,HIGH);
   if (c==0) { digitalWrite(yellow,HIGH); } else { digitalWrite(yellow,LOW); }
-  Serial.print("0x80=");Serial.println(c);
+  //Serial.print("0x80=");Serial.println(c);
+  
+  digitalWrite(MAX7456SELECT,LOW); 
+  MAX7456_spi_transfer(0x81); // read status register
+  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(1<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  c = MAX7456_spi_transfer(0x00); // dont care what I send, this is reading
+  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  digitalWrite(MAX7456SELECT,HIGH);
+  //Serial.print("0x81=");Serial.println(c);
+  
+  for ( x=0x80; x < 0xA1; x++) {
+    digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
+  }
+  x=0xEC; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
+  x=0xB0; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
+  x=0xC0; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
   
   digitalWrite(MAX7456SELECT,LOW); 
   c = MAX7456_spi_read(0xA0);
