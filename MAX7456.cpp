@@ -99,7 +99,7 @@ void MAX7456::begin()
   // make sure the MAX7456 is enabled
   digitalWrite(_slave_select,LOW);
   MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_EXTERNAL);
+  MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
   //MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE);
   digitalWrite(_slave_select,HIGH);
   delay(100);
