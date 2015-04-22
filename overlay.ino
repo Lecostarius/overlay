@@ -14,55 +14,48 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456_DATAIN  50//MISO, PB3
 #define MAX7456_SCK  52//sck, PB1
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
+
 void testOp() {
     // try writing into shadow RAM
     byte c;
     
-    digitalWrite(MAX7456SELECT,LOW); 
-    
-    //MAX7456_spi_transfer(VM0_READ_ADDR);
-    //c = MAX7456_spi_read(x);
-    //MAX7456_spi_transfer(c & ~(1<<3)); // write VMO[3]=0
-    
-    MAX7456_spi_transfer(VM0_WRITE_ADDR);
-    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // write VM0[3] = 0
-    
-    MAX7456_spi_transfer(CMAH_WRITE_ADDR);
-    MAX7456_spi_transfer(0); // which character to write (0..255)
-    
-    MAX7456_spi_transfer(CMAL_WRITE_ADDR);
-    MAX7456_spi_transfer(0); // which 4-pixel byte of the character to modify (can be 0..63)
-    
-    MAX7456_spi_transfer(CMDI_WRITE_ADDR);
-    MAX7456_spi_transfer(0x55); // this is the actual data we write into the shadow RAM
-    
-    MAX7456_spi_transfer(VM0_WRITE_ADDR);
-    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
 
-    digitalWrite(MAX7456SELECT,HIGH);
+    MAX7456poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
+    c=MAX7456peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
+    c=MAX7456peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH: "); Serial.println(c);
+    MAX7456poke(DMAH_WRITE_ADDR,c & (~0x02) ); // DMAH bit 1 cleared to read character, not attributes.
+    MAX7456poke(DMAH_WRITE_ADDR,c & (~0x03) ); // bit 0 is MSB of the adress, we want 0
+    c=MAX7456peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time: "); Serial.println(c);
+    MAX7456poke(DMAL_WRITE_ADDR, 6); // we want adress 6
+    c=MAX7456peek(DMDO_READ_ADDR);Serial.print("Read from display RAM: 0x"); Serial.println(c,HEX);
+    MAX7456poke(DMM_WRITE_ADDR,0x0); 
+    c=MAX7456peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
     
-    Serial.print("Done writing to shadow RAM.\n");
     
-    digitalWrite(MAX7456SELECT,LOW); 
     
-    MAX7456_spi_transfer(VM0_WRITE_ADDR);
-    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // write VM0[3] = 0
+}
 
-    MAX7456_spi_transfer(CMAH_WRITE_ADDR);
-    MAX7456_spi_transfer(0); // which character to write (0..255)
+void testOp2() {
+  // try writing into shadow RAM
+  byte c;
     
-    MAX7456_spi_transfer(CMAL_WRITE_ADDR);
-    MAX7456_spi_transfer(0); // which 4-pixel byte of the character to modify (can be 0..63)
-   
-    MAX7456_spi_transfer(CMDO_READ_ADDR);
-    c = MAX7456_spi_read(0);
-    
-    MAX7456_spi_transfer(VM0_WRITE_ADDR);
-    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
-   
-    digitalWrite(MAX7456SELECT,HIGH);
-    
-    Serial.print("Read data %d from memory: "); Serial.print(c,HEX); Serial.println();
+  MAX7456poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
+  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  MAX7456poke(CMAH_WRITE_ADDR,0);
+  MAX7456poke(CMAL_WRITE_ADDR,0);
+  MAX7456poke(CMDI_WRITE_ADDR,0x1);
+  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+  MAX7456poke(DMM_WRITE_ADDR,0); // 16 bit mode
+  Serial.print("Done writing to shadow RAM.\n");
+  MAX7456poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
+  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  MAX7456poke(CMAH_WRITE_ADDR,0);
+  MAX7456poke(CMAL_WRITE_ADDR,0);
+  c=MAX7456peek(CMDO_READ_ADDR);
+  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+  MAX7456poke(DMM_WRITE_ADDR,0); // 16 bit mode
+  
+  Serial.print("Read data from memory: 0x"); Serial.print(c,HEX); Serial.println();
     
 }
   
@@ -126,6 +119,7 @@ void setup() {
   char charA[128];
   
   testOp();
+  testOp2();
   
   //mx->read_character(0x42, charA); // first param: which char to read
   //for (int i=0; i < 32; i++) {
@@ -170,6 +164,11 @@ void loop() {
   x=0xEC; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
   x=0xB0; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
   x=0xC0; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
+
+  Serial.println();
+  for ( x=0x80; x < 0xA1; x++) {
+    c = MAX7456peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
+  }
   
   digitalWrite(MAX7456SELECT,LOW); 
   c = MAX7456_spi_read(0xA0);
