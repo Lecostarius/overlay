@@ -14,7 +14,58 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456_DATAIN  50//MISO, PB3
 #define MAX7456_SCK  52//sck, PB1
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
+void testOp() {
+    // try writing into shadow RAM
+    char c;
+    
+    digitalWrite(MAX7456SELECT,LOW); 
+    
+    //MAX7456_spi_transfer(VM0_READ_ADDR);
+    //c = MAX7456_spi_read(x);
+    //MAX7456_spi_transfer(c & ~(1<<3)); // write VMO[3]=0
+    
+    MAX7456_spi_transfer(VM0_WRITE_ADDR);
+    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // write VM0[3] = 0
+    
+    MAX7456_spi_transfer(CMAH_WRITE_ADDR);
+    MAX7456_spi_transfer(0); // which character to write (0..255)
+    
+    MAX7456_spi_transfer(CMAL_WRITE_ADDR);
+    MAX7456_spi_transfer(0); // which 4-pixel byte of the character to modify (can be 0..63)
+    
+    MAX7456_spi_transfer(CMDI_WRITE_ADDR);
+    MAX7456_spi_transfer(0x55); // this is the actual data we write into the shadow RAM
+    
+    MAX7456_spi_transfer(VM0_WRITE_ADDR);
+    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
 
+    digitalWrite(MAX7456SELECT,HIGH);
+    
+    Serial.print("Done writing to shadow RAM.\n");
+    
+    digitalWrite(MAX7456SELECT,LOW); 
+    
+    MAX7456_spi_transfer(VM0_WRITE_ADDR);
+    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // write VM0[3] = 0
+
+    MAX7456_spi_transfer(CMAH_WRITE_ADDR);
+    MAX7456_spi_transfer(0); // which character to write (0..255)
+    
+    MAX7456_spi_transfer(CMAL_WRITE_ADDR);
+    MAX7456_spi_transfer(0); // which 4-pixel byte of the character to modify (can be 0..63)
+   
+    MAX7456_spi_transfer(CMDO_READ_ADDR);
+    c = MAX7456_spi_read(0);
+    
+    MAX7456_spi_transfer(VM0_WRITE_ADDR);
+    MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+   
+    digitalWrite(MAX7456SELECT,HIGH);
+    
+    Serial.print("Read data %d from memory\n"); 
+    
+}
+  
 void SPI_MasterInit() {
 //  pinMode(MAX7456SELECT, OUTPUT); digitalWrite(MAX7456SELECT, HIGH); delay(10);
 //  pinMode(MAX7456_DATAOUT, OUTPUT);
@@ -73,11 +124,15 @@ void setup() {
     mx->write_0(c & 0xFF);
   }    
   char charA[128];
+  
+  testOp();
+  
   //mx->read_character(0x42, charA); // first param: which char to read
   //for (int i=0; i < 32; i++) {
   //  Serial.print("char "); Serial.print(i); Serial.print(" is "); Serial.println((int)charA[i]);
   //}
 }
+
 
 void loop() {
   byte c;
