@@ -20,7 +20,8 @@ byte MAX7456peek(byte adress) {
   byte retval=0;
   digitalWrite(MAX7456SELECT,LOW); 
   MAX7456_spi_transfer(adress);
-  retval=MAX7456_spi_transfer(0);
+
+  retval=MAX7456_spi_transfer(0xff);
   digitalWrite(MAX7456SELECT,HIGH);
   return(retval);
 }
