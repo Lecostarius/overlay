@@ -10,6 +10,21 @@
 #include <Arduino.h>
 #include "MAX7456.h"
 
+void MAX7456poke(byte adress, byte data) {
+  digitalWrite(MAX7456SELECT,LOW); 
+  MAX7456_spi_transfer(adress);
+  MAX7456_spi_transfer(data); 
+  digitalWrite(MAX7456SELECT,HIGH);
+}
+byte MAX7456peek(byte adress) {
+  byte retval=0;
+  digitalWrite(MAX7456SELECT,LOW); 
+  MAX7456_spi_transfer(adress);
+  retval=MAX7456_spi_transfer(0);
+  digitalWrite(MAX7456SELECT,HIGH);
+  return(retval);
+}
+    
 byte MAX7456_spi_read(volatile char data) {
   byte old_spcr = SPCR;
   SPDR = data;
