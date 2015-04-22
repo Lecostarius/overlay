@@ -16,7 +16,7 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
 void testOp() {
     // try writing into shadow RAM
-    char c;
+    byte c;
     
     digitalWrite(MAX7456SELECT,LOW); 
     
@@ -62,7 +62,7 @@ void testOp() {
    
     digitalWrite(MAX7456SELECT,HIGH);
     
-    Serial.print("Read data %d from memory\n"); 
+    Serial.print("Read data %d from memory: "); Serial.print(c,HEX); Serial.println();
     
 }
   
