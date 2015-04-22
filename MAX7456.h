@@ -34,6 +34,7 @@
 #define DMAH_WRITE_ADDR  0x05
 #define DMAH_READ_ADDR 0x85
 #define DMAL_WRITE_ADDR  0x06
+#define DMAL_READ_ADDR 0x86
 #define DMDI_WRITE_ADDR  0x07
 #define VM0_WRITE_ADDR   0x00
 #define VM0_READ_ADDR   0x80
