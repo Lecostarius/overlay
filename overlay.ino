@@ -16,7 +16,7 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
 
 void testOp() {
-    // try writing into shadow RAM
+    // try reading from display RAM
     byte c;
     
 
@@ -26,8 +26,10 @@ void testOp() {
     MAX7456poke(DMAH_WRITE_ADDR,c & (~0x02) ); // DMAH bit 1 cleared to read character, not attributes.
     MAX7456poke(DMAH_WRITE_ADDR,c & (~0x03) ); // bit 0 is MSB of the adress, we want 0
     c=MAX7456peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time: "); Serial.println(c);
-    MAX7456poke(DMAL_WRITE_ADDR, 6); // we want adress 6
+    MAX7456poke(DMAL_WRITE_ADDR, 0x02); // we want adress 6
+    c=MAX7456peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
     c=MAX7456peek(DMDO_READ_ADDR);Serial.print("Read from display RAM: 0x"); Serial.println(c,HEX);
+    c=MAX7456peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
     MAX7456poke(DMM_WRITE_ADDR,0x0); 
     c=MAX7456peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
     
@@ -115,6 +117,7 @@ void setup() {
   mx->home();
   for (int c=0; c<255;c++) {
     mx->write_0(c & 0xFF);
+    //mx->write_0(0x77);
   }    
   char charA[128];
   
