@@ -32,6 +32,7 @@
 #define DMM_WRITE_ADDR   0x04
 #define DMM_READ_ADDR   0x84
 #define DMAH_WRITE_ADDR  0x05
+#define DMAH_READ_ADDR 0x85
 #define DMAL_WRITE_ADDR  0x06
 #define DMDI_WRITE_ADDR  0x07
 #define VM0_WRITE_ADDR   0x00
@@ -51,6 +52,8 @@
 #define CMDO_READ_ADDR 0xC1
 #define CMDI_READ_ADDR 0x8B
 #define CMDI_WRITE_ADDR 0x0B
+// There is no DMDO write adress
+#define DMDO_READ_ADDR 0xB0
 
 // video mode register 0 bits
 #define VIDEO_BUFFER_DISABLE 0x01
@@ -115,6 +118,8 @@
 
 byte MAX7456_spi_transfer(char data);
 byte MAX7456_spi_read(volatile char data);
+void MAX7456poke(byte adress, byte data);
+byte MAX7456peek(byte adress);
 
 //class MAX7456 : public Print
 class MAX7456
