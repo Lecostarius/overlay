@@ -56,7 +56,7 @@
 // There is no DMDO write adress
 #define DMDO_READ_ADDR 0xB0
 
-// video mode register 0 bits
+// video mode register 0 bits. Create the pattern by ORing the ones you need.
 #define VIDEO_BUFFER_DISABLE 0x01
 #define MAX7456_RESET 0x02
 #define VERTICAL_SYNC_NEXT_VSYNC 0x04
@@ -150,6 +150,7 @@ class MAX7456 {
   void write_0(uint8_t c);
   size_t write(uint8_t c);
   void writeChar(uint8_t c);
+  void writeChar0(uint8_t c, uint8_t a);
   byte convert_ascii(int character);
   void offset(int horizontal, int vertical);
   void clear();

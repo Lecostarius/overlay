@@ -10,11 +10,8 @@
 #include <Arduino.h>
 #include "MAX7456.h"
 
-
-//#define MAX7456_spi_transfer(X) {SPDR = X; while (!(SPSR & (1<<SPIF))) {;}}
-
-MAX7456::MAX7456()
-{
+// Constructor
+MAX7456::MAX7456() {
   _slave_select = MAX7456SELECT;
   _char_attributes = 0x01;
   _cursor_x = CURSOR_X_MIN;
@@ -26,19 +23,19 @@ void MAX7456::Poke(byte adress, byte data) {
   MAX7456_spi_transfer(adress);
   MAX7456_spi_transfer(data); 
   digitalWrite(MAX7456SELECT,HIGH);
-  delay(1);
+  //delay(1);
 }
 byte MAX7456::Peek(byte adress) {
   byte retval=0;
-  delay(1);
+  //delay(1);
   digitalWrite(MAX7456SELECT,LOW); 
-  delay(1);
+  //delay(1);
   MAX7456_spi_transfer(adress);
-  delay(1);
+  //delay(1);
   retval=MAX7456_spi_transfer(0xff);
-  delay(1);
+  //delay(1);
   digitalWrite(MAX7456SELECT,HIGH);
-  delay(1);
+  //delay(1);
   return(retval);
 }
     
@@ -62,101 +59,43 @@ void MAX7456::begin(byte slave_select)
 
 void MAX7456::begin() {
   uint8_t x, spi_junk;
+  
   pinMode(_slave_select,OUTPUT);
   digitalWrite(_slave_select,HIGH); //disable device
-  // configure SPI device
   pinMode(MAX7456_DATAOUT, OUTPUT);
   pinMode(MAX7456_DATAIN, INPUT);
   pinMode(MAX7456_SCK,OUTPUT);
+  
+  // configure SPI device on the microcontroller
   MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  MAX7456_SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  // SPIF - SPI interrupt flag
+  // WCOL - write collision flag
+  // SPI2X - double speed SPI flag
+  SPCR = MAX7456_SPCR;
+  SPSR = (0<<SPIF)|(0<<WCOL)|(0<<SPI2X);
   spi_junk=SPSR;spi_junk=SPDR;delay(25); // do we really need that? TK TODO
-  MAX7456_SPCR = SPCR;
+  
   
   // now configure the MAX7456
   Poke(VM0_WRITE_ADDR, MAX7456_reset); // soft reset
   delay(500);
-  // set all rows to same charactor white level, 90%
+  // set all rows to same character white level, 90%
   for (x = 0; x < MAX_screen_rows; x++) {
     Poke(x+0x10, WHITE_level_90);
   }
   // set basic mode: enable, PAL, Sync mode, ...
   Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
-  delay(1);
+  //delay(1);
   // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
-  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_75_25);
-  delay(1);
+  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
+  //delay(1);
   Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
-  delay(1);
+  //delay(1);
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 }  
 
-#ifdef UNDEF
-void MAX7456::begin()
-{
-  byte spi_junk;
-  int x;
-  // pull chip select of the max7456 to HIGH (inactive)
-  pinMode(_slave_select,OUTPUT);
-  digitalWrite(_slave_select,HIGH); //disable device
-  
-  // configure SPI device
-  pinMode(MAX7456_DATAOUT, OUTPUT);
-  pinMode(MAX7456_DATAIN, INPUT);
-  pinMode(MAX7456_SCK,OUTPUT);
-//  pinMode(MAX7456_VSYNC, INPUT);
 
-  // SPCR = 01010000
-  //interrupt disabled,spi enabled,msb 1st,master,clk low when idle,
-  //sample on leading edge of clk,system clock/4 rate (4 meg)
-
-  
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-
-  //SPCR = (1<<SPE)|(1<<MSTR);
-  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
-  spi_junk=SPSR;
-  spi_junk=SPDR;
-  delay(250);
-  MAX7456_SPCR = SPCR;
-
-  // force soft reset on MAX7456
-  digitalWrite(_slave_select,LOW);
-  MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  
-  MAX7456_spi_transfer(MAX7456_reset);
-  
-  digitalWrite(_slave_select,HIGH);
-  delay(500);
-  
-  
-  // set all rows to same charactor white level, 90%
-  digitalWrite(_slave_select,LOW);
-  for (x = 0; x < MAX_screen_rows; x++)
-  {
-    MAX7456_spi_transfer(x + 0x10);
-    MAX7456_spi_transfer(WHITE_level_90);
-  }
-  digitalWrite(_slave_select,HIGH);
-
-  // make sure the MAX7456 is enabled
-  digitalWrite(_slave_select,LOW);
-  MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
-  //MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE);
-  digitalWrite(_slave_select,HIGH);
-  delay(100);
-
-  digitalWrite(_slave_select,LOW);
-  MAX7456_spi_transfer(VM1_WRITE_ADDR);
-  MAX7456_spi_transfer(BLINK_DUTY_CYCLE_75_25);
-  digitalWrite(_slave_select,HIGH);
-  delay(100);
-
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR
-}
-#endif
- 
 byte MAX7456::convert_ascii(int character) 
 {
 // for some reason the MAX7456 does not follow ascii letter
@@ -208,33 +147,19 @@ byte MAX7456::convert_ascii(int character)
 // Adjust the horizontal and vertical offet
 // Horizontal offset between -32 and +31
 // Vertical offset between -15 and +16
-void MAX7456::offset(int horizontal, int vertical)
-{
+void MAX7456::offset(int horizontal, int vertical) {
   //Constrain horizontal between -32 and +31
-  if (horizontal < -32) 
-     horizontal = -32;
-  else if (horizontal > 31)
-    horizontal = 31;
+  if (horizontal < -32) horizontal = -32;
+  if (horizontal > 31)  horizontal = 31;
    
   //Constrain vertical between -15 and +16
-  if (vertical < -15) 
-    vertical = -15;
-  else if (vertical > 16)
-    vertical = 16;
+  if (vertical < -15) vertical = -15;
+  if (vertical > 16)  vertical = 16;
 
   // Write new offsets to the OSD
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = MAX7456_SPCR;  // set SPCR to what we need
-  
-  digitalWrite(_slave_select,LOW);
-  MAX7456_spi_transfer(HOS_WRITE_ADDR); //horizontal offset
-  MAX7456_spi_transfer(horizontal);
-  
-  MAX7456_spi_transfer(VOS_WRITE_ADDR); //vertical offset
-  MAX7456_spi_transfer(vertical);
-  digitalWrite(_slave_select,HIGH);  
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR   
-  
+  Poke(HOS_WRITE_ADDR,horizontal);
+  Poke(VOS_WRITE_ADDR,vertical);
+ 
 }
 
 void MAX7456::clear() {
@@ -257,26 +182,35 @@ size_t MAX7456::write(uint8_t c) {
 }
 
 void MAX7456::writeChar(uint8_t c) {
-  
   uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
-  
   // compute next cursor position
   if (++_cursor_x >= CURSOR_X_MAX) {
     if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
     _cursor_x = CURSOR_X_MIN;
   }
-  
-  Poke(DMM_WRITE_ADDR, 0); // enter 8 bit mode, no increment mode
-  //Poke(DMM_WRITE_ADDR,_char_attributes);
+  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
   Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
   Poke(DMAL_WRITE_ADDR, linepos&0xFF);
   Poke(DMDI_WRITE_ADDR, c);
-  //Poke(DMDI_WRITE_ADDR,END_string);
-  //Poke(DMM_WRITE_ADDR,0);
 
 } 
  
- 
+void MAX7456::writeChar0(uint8_t c, uint8_t attributes) {
+  uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
+  // compute next cursor position
+  if (++_cursor_x >= CURSOR_X_MAX) {
+    if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
+    _cursor_x = CURSOR_X_MIN;
+  }
+  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
+  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  Poke(DMDI_WRITE_ADDR, c);
+
+  Poke(DMAH_WRITE_ADDR, 0x02 | linepos>>8);
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  Poke(DMDI_WRITE_ADDR, attributes);
+} 
   
 // this is probably inefficient, as i simply modified a more general function
 // that wrote arbitrary length strings. need to check modes of writing
@@ -357,13 +291,11 @@ void MAX7456::write_0(uint8_t c)
 }
 
 
-void MAX7456::write_to_screen(char s[], byte x, byte y)
-{
+void MAX7456::write_to_screen(char s[], byte x, byte y) {
   write_to_screen(s, x, y, 0, 0);
 }
 
-void MAX7456::write_to_screen(char s[], byte line)
-{
+void MAX7456::write_to_screen(char s[], byte line) {
   write_to_screen(s, 1, line, 0, 0);
 }
 

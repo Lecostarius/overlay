@@ -1,7 +1,5 @@
 #include "MAX7456.h"
 
-// dieser Sketch erzeugt kurz ein Overlay das danach gleich wieder verschwindet
-// das liegt wohl an dem Aufruf von mx->read_character(0x42, charA)
 
 
 int led=13;
@@ -60,7 +58,7 @@ void testOp2() {
   Serial.print("Read data from memory: 0x"); Serial.print(c,HEX); Serial.println();
     
 }
-  
+#ifdef UNDEF
 void SPI_MasterInit() {
 //  pinMode(MAX7456SELECT, OUTPUT); digitalWrite(MAX7456SELECT, HIGH); delay(10);
 //  pinMode(MAX7456_DATAOUT, OUTPUT);
@@ -90,28 +88,17 @@ void SPI_MasterInit() {
   SPSR = (0<<SPIF)|(0<<WCOL)|(0<<SPI2X);
   
 }
+#endif
 
 void setup() {
   Serial.begin(115200);
   Serial.println("overlay code started\n");
-  // put your setup code here, to run once:
-    // initialize the digital pin as an output.
-  SPI_MasterInit();
-  pinMode(led, OUTPUT);     
-  pinMode(green,OUTPUT); pinMode(yellow,OUTPUT);
-  digitalWrite(led,HIGH); delay(200);digitalWrite(led,LOW); 
-  digitalWrite(green,HIGH);
-  delay(200); 
-  digitalWrite(green,LOW);
-  digitalWrite(led,HIGH); 
-  digitalWrite(yellow,HIGH);
-  delay(200); 
-  digitalWrite(yellow,LOW);
-  digitalWrite(led,LOW);
-  Serial.println("Started.");
-  //pinMode(MAX7456_DATAOUT,OUTPUT);
-  //pinMode(MAX7456_SCK,OUTPUT);
-  //pinMode(MAX7456SELECT,OUTPUT);
+
+  //SPI_MasterInit();
+  pinMode(SS,OUTPUT); // to avoid that we can be switched back into Slave mode. This pin is not used, but may not be INPUT and then LOW. See datasheet pp 197ff
+  
+  pinMode(green,OUTPUT); pinMode(yellow,OUTPUT);pinMode(led, OUTPUT);    
+
   mx->begin();
   mx->offset(31,16); // hori=-32...31, vert=-15..16. void MAX7456::offset(int horizontal, int vertical)
   mx->home();
@@ -119,6 +106,7 @@ void setup() {
     mx->writeChar(c);
     //mx->write_0(c);
   }    
+  mx->writeChar0(5,0xc0);
   char charA[128];
   delay(100);
   //testOp();
