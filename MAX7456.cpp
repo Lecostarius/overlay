@@ -10,42 +10,6 @@
 #include <Arduino.h>
 #include "MAX7456.h"
 
-void MAX7456poke(byte adress, byte data) {
-  digitalWrite(MAX7456SELECT,LOW); 
-  MAX7456_spi_transfer(adress);
-  MAX7456_spi_transfer(data); 
-  digitalWrite(MAX7456SELECT,HIGH);
-}
-byte MAX7456peek(byte adress) {
-  byte retval=0;
-  digitalWrite(MAX7456SELECT,LOW); 
-  MAX7456_spi_transfer(adress);
-
-  retval=MAX7456_spi_transfer(0xff);
-  digitalWrite(MAX7456SELECT,HIGH);
-  return(retval);
-}
-    
-byte MAX7456_spi_read(volatile char data) {
-  byte old_spcr = SPCR;
-  SPDR = data;
-  while (!(SPSR & (1<<SPIF))) ;
-  SPCR = old_spcr | (1<<CPHA); // read data on falling clock edge, not rising
-  SPDR = 0;
-  while (!(SPSR & (1<<SPIF))) ;
-  SPCR = old_spcr;
-  return SPDR;
-}
-  
-byte MAX7456_spi_transfer(volatile char data)
-{
-  SPDR = data;                    // Start the transmission
-  while (!(SPSR & (1<<SPIF)))     // Wait the end of the transmission
-  {
-  };
-  return SPDR;                    // return the received byte
-}
-
 
 //#define MAX7456_spi_transfer(X) {SPDR = X; while (!(SPSR & (1<<SPIF))) {;}}
 
@@ -55,6 +19,38 @@ MAX7456::MAX7456()
   _char_attributes = 0x01;
   _cursor_x = CURSOR_X_MIN;
   _cursor_y = CURSOR_Y_MIN;
+}
+
+void MAX7456::Poke(byte adress, byte data) {
+  digitalWrite(MAX7456SELECT,LOW); 
+  MAX7456_spi_transfer(adress);
+  MAX7456_spi_transfer(data); 
+  digitalWrite(MAX7456SELECT,HIGH);
+  delay(1);
+}
+byte MAX7456::Peek(byte adress) {
+  byte retval=0;
+  delay(1);
+  digitalWrite(MAX7456SELECT,LOW); 
+  delay(1);
+  MAX7456_spi_transfer(adress);
+  delay(1);
+  retval=MAX7456_spi_transfer(0xff);
+  delay(1);
+  digitalWrite(MAX7456SELECT,HIGH);
+  delay(1);
+  return(retval);
+}
+    
+
+byte MAX7456::MAX7456_spi_transfer(volatile char data) {
+  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
+  SPCR = MAX7456_SPCR;  // set SPCR to what we need
+  
+  SPDR = data;                    // Start the transmission
+  while (!(SPSR & (1<<SPIF))) ;   // Wait the end of the transmission
+  SPCR = MAX7456_previous_SPCR;
+  return SPDR;                    // return the received byte
 }
 
 
@@ -136,7 +132,7 @@ byte MAX7456::convert_ascii(int character)
 // placement, so you have to have this odd lookup table
 
   byte lookup_char;
-
+  return(character & 0xff);
   if (character == 32)
     lookup_char = 0x00; // blank space
   else if (character == 48)
@@ -209,22 +205,13 @@ void MAX7456::offset(int horizontal, int vertical)
   SPCR = MAX7456_previous_SPCR;   // restore SPCR   
   
 }
-// clear the screen
-void MAX7456::clear()
-{
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = MAX7456_SPCR;  // set SPCR to what we need
 
-  digitalWrite(_slave_select,LOW);
-  MAX7456_spi_transfer(DMM_WRITE_ADDR);
-  MAX7456_spi_transfer(CLEAR_display);
-  digitalWrite(_slave_select,HIGH);
-
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR
-
+void MAX7456::clear() {
+  Poke(DMM_WRITE_ADDR,CLEAR_display);
   _cursor_x = CURSOR_X_MIN;
   _cursor_y = CURSOR_Y_MIN;
-} 
+  while(Peek(DMM_READ_ADDR) & CLEAR_display) ; // wait until operation is completed and bit is set to zero again
+}
 
 // send the cursor to home
 void MAX7456::home()

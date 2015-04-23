@@ -117,16 +117,17 @@
 #define CURSOR_Y_MIN 0
 #define CURSOR_Y_MAX 12
 
-byte MAX7456_spi_transfer(char data);
-byte MAX7456_spi_read(volatile char data);
-void MAX7456poke(byte adress, byte data);
-byte MAX7456peek(byte adress);
 
 //class MAX7456 : public Print
 class MAX7456
 {
  public:
   MAX7456();
+  byte MAX7456_spi_transfer(char data);
+  byte MAX7456_spi_read(volatile char data);
+  void Poke(byte adress, byte data);
+  byte Peek(byte adress);
+
   void begin();
   void begin(byte slave_select);
   void write_to_screen(char s[], byte x, byte y, byte blink, byte invert);

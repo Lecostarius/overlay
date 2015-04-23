@@ -20,18 +20,18 @@ void testOp() {
     byte c;
     
 
-    MAX7456poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
-    c=MAX7456peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
-    c=MAX7456peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH: "); Serial.println(c);
-    MAX7456poke(DMAH_WRITE_ADDR,c & (~0x02) ); // DMAH bit 1 cleared to read character, not attributes.
-    MAX7456poke(DMAH_WRITE_ADDR,c & (~0x03) ); // bit 0 is MSB of the adress, we want 0
-    c=MAX7456peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time: "); Serial.println(c);
-    MAX7456poke(DMAL_WRITE_ADDR, 0x02); // we want adress 6
-    c=MAX7456peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
-    c=MAX7456peek(DMDO_READ_ADDR);Serial.print("Read from display RAM: 0x"); Serial.println(c,HEX);
-    c=MAX7456peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
-    MAX7456poke(DMM_WRITE_ADDR,0x0); 
-    c=MAX7456peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
+    mx->Poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
+    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
+    c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH: "); Serial.println(c);
+    mx->Poke(DMAH_WRITE_ADDR,c & (~0x02) ); // DMAH bit 1 cleared to read character, not attributes.
+    mx->Poke(DMAH_WRITE_ADDR,c & (~0x03) ); // bit 0 is MSB of the adress, we want 0
+    c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time: "); Serial.println(c);
+    mx->Poke(DMAL_WRITE_ADDR, 0x02); // we want adress 6
+    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
+    c=mx->Peek(DMDO_READ_ADDR);Serial.print("Read from display RAM: 0x"); Serial.println(c,HEX);
+    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
+    mx->Poke(DMM_WRITE_ADDR,0x0); 
+    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
     
     
     
@@ -41,21 +41,21 @@ void testOp2() {
   // try writing into shadow RAM
   byte c;
     
-  MAX7456poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
-  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
-  MAX7456poke(CMAH_WRITE_ADDR,0);
-  MAX7456poke(CMAL_WRITE_ADDR,0);
-  MAX7456poke(CMDI_WRITE_ADDR,0x1);
-  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
-  MAX7456poke(DMM_WRITE_ADDR,0); // 16 bit mode
+  mx->Poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  mx->Poke(CMAH_WRITE_ADDR,0);
+  mx->Poke(CMAL_WRITE_ADDR,0);
+  mx->Poke(CMDI_WRITE_ADDR,0x1);
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+  mx->Poke(DMM_WRITE_ADDR,0); // 16 bit mode
   Serial.print("Done writing to shadow RAM.\n");
-  MAX7456poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
-  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
-  MAX7456poke(CMAH_WRITE_ADDR,0);
-  MAX7456poke(CMAL_WRITE_ADDR,0);
-  c=MAX7456peek(CMDO_READ_ADDR);
-  MAX7456poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
-  MAX7456poke(DMM_WRITE_ADDR,0); // 16 bit mode
+  mx->Poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  mx->Poke(CMAH_WRITE_ADDR,0);
+  mx->Poke(CMAL_WRITE_ADDR,0);
+  c=mx->Peek(CMDO_READ_ADDR);
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+  mx->Poke(DMM_WRITE_ADDR,0); // 16 bit mode
   
   Serial.print("Read data from memory: 0x"); Serial.print(c,HEX); Serial.println();
     
@@ -113,14 +113,14 @@ void setup() {
   //pinMode(MAX7456_SCK,OUTPUT);
   //pinMode(MAX7456SELECT,OUTPUT);
   mx->begin();
-  mx->offset(0,15); // hori=-32...31, vert=-15..16. void MAX7456::offset(int horizontal, int vertical)
+  mx->offset(31,16); // hori=-32...31, vert=-15..16. void MAX7456::offset(int horizontal, int vertical)
   mx->home();
-  for (int c=0; c<255;c++) {
-    mx->write_0(c & 0xFF);
+  for (byte c=0; c<255;c++) {
+    mx->write_0(c);
     //mx->write_0(0x77);
   }    
   char charA[128];
-  
+  delay(100);
   testOp();
   testOp2();
   
@@ -141,7 +141,7 @@ void loop() {
   //digitalWrite(MAX7456_SCK,HIGH);
   //digitalWrite(MAX7456_DATAOUT,HIGH);
   delay(250);               // wait for a second
-  
+#ifdef UNDEFINED 
   SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
   delay(1);
   digitalWrite(MAX7456SELECT,LOW); 
@@ -160,22 +160,18 @@ void loop() {
   SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
   digitalWrite(MAX7456SELECT,HIGH);
   //Serial.print("0x81=");Serial.println(c);
-  
-  for ( x=0x80; x < 0xA1; x++) {
-    digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
-  }
-  x=0xEC; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
-  x=0xB0; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
-  x=0xC0; digitalWrite(MAX7456SELECT,LOW); c = MAX7456_spi_read(x); digitalWrite(MAX7456SELECT,HIGH); Serial.print(x,HEX); Serial.print("="); Serial.print(c,BIN); Serial.print(",");
-
   Serial.println();
-  for ( x=0x80; x < 0xA1; x++) {
-    c = MAX7456peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
-  }
+#endif
+
   
-  digitalWrite(MAX7456SELECT,LOW); 
-  c = MAX7456_spi_read(0xA0);
-  digitalWrite(MAX7456SELECT,HIGH);
+  for ( x=0x80; x < 0xA1; x++) {
+    c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
+  }
+  x=0xEC; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
+  x=0xB0; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
+  x=0xC0; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
+  
+  c = mx->Peek(0xA0);
   Serial.print("stat=");Serial.println(c);
   
   digitalWrite(led,LOW);
