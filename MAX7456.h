@@ -141,7 +141,7 @@ class MAX7456 {
   byte MAX7456_spi_read(volatile char data);
   void Poke(byte adress, byte data);
   byte Peek(byte adress);
-
+  byte ReadDisplay(uint16_t x, uint16_t y);
   void begin();
   void begin(byte slave_select);
   void write_to_screen(char s[], byte x, byte y, byte blink, byte invert);
