@@ -113,7 +113,7 @@
 #define ENABLE_display_vert 0x0c
 #define MAX_screen_size 390
 #define MAX_screen_rows 13
-#define CURSOR_X_MIN 0
+#define CURSOR_X_MIN 2
 #define CURSOR_X_MAX 29
 #define CURSOR_Y_MIN 0
 #define CURSOR_Y_MAX 13
@@ -127,7 +127,7 @@
 #define ENABLE_display_vert 0x4c
 #define MAX_screen_size 480
 #define MAX_screen_rows 15
-#define CURSOR_X_MIN 0
+#define CURSOR_X_MIN 1
 #define CURSOR_X_MAX 29
 #define CURSOR_Y_MIN 0
 #define CURSOR_Y_MAX 15

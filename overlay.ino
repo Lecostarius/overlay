@@ -116,13 +116,13 @@ void setup() {
   mx->offset(31,16); // hori=-32...31, vert=-15..16. void MAX7456::offset(int horizontal, int vertical)
   mx->home();
   for (byte c=0; c<255;c++) {
-    //mx->writeChar(c);
-    mx->write_0(0x77);
+    mx->writeChar(c);
+    //mx->write_0(c);
   }    
   char charA[128];
   delay(100);
-  testOp();
-  testOp2();
+  //testOp();
+  //testOp2();
   
   //mx->read_character(0x42, charA); // first param: which char to read
   //for (int i=0; i < 32; i++) {
