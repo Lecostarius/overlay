@@ -96,11 +96,6 @@
 #define CLEAR_display 0x04
 #define CLEAR_display_vert 0x06
 #define END_string 0xff
-// with NTSC
-#define ENABLE_display 0x08
-#define ENABLE_display_vert 0x0c
-#define MAX7456_reset 0x02
-#define DISABLE_display 0x00
 
 
 #define WHITE_level_80 0x03
@@ -108,19 +103,38 @@
 #define WHITE_level_100 0x01
 #define WHITE_level_120 0x00
 
+#define PAL_MODE
+
 // with NTSC
+#ifdef NTSC_MODE
+#define MAX7456_reset 0x02
+#define DISABLE_display 0x00
+#define ENABLE_display 0x08
+#define ENABLE_display_vert 0x0c
 #define MAX_screen_size 390
 #define MAX_screen_rows 13
-
-#define CURSOR_X_MIN 2
+#define CURSOR_X_MIN 0
 #define CURSOR_X_MAX 29
 #define CURSOR_Y_MIN 0
-#define CURSOR_Y_MAX 12
+#define CURSOR_Y_MAX 13
+#endif
 
+// with PAL
+#ifdef PAL_MODE
+#define MAX7456_reset 0x42
+#define DISABLE_display 0x40
+#define ENABLE_display 0x48
+#define ENABLE_display_vert 0x4c
+#define MAX_screen_size 480
+#define MAX_screen_rows 15
+#define CURSOR_X_MIN 0
+#define CURSOR_X_MAX 29
+#define CURSOR_Y_MIN 0
+#define CURSOR_Y_MAX 15
+#endif
 
 //class MAX7456 : public Print
-class MAX7456
-{
+class MAX7456 {
  public:
   MAX7456();
   byte MAX7456_spi_transfer(char data);
