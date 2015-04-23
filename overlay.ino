@@ -15,24 +15,19 @@ MAX7456 *mx = new MAX7456();
 
 void testOp() {
     // try reading from display RAM
-    byte c;
-    
-
+    byte c;   
     mx->Poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
-    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
+    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM (should be 0x40): 0x"); Serial.println(c,HEX);
     c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH: "); Serial.println(c);
     mx->Poke(DMAH_WRITE_ADDR,c & (~0x02) ); // DMAH bit 1 cleared to read character, not attributes.
     mx->Poke(DMAH_WRITE_ADDR,c & (~0x03) ); // bit 0 is MSB of the adress, we want 0
-    c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time: "); Serial.println(c);
-    mx->Poke(DMAL_WRITE_ADDR, 0x02); // we want adress 6
-    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
+    c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time (should be 0): "); Serial.println(c);
+    mx->Poke(DMAL_WRITE_ADDR, 0x06); // we want adress 6
+    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte, should be 02): 0x"); Serial.println(c,HEX);
     c=mx->Peek(DMDO_READ_ADDR);Serial.print("Read from display RAM: 0x"); Serial.println(c,HEX);
-    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte): 0x"); Serial.println(c,HEX);
-    mx->Poke(DMM_WRITE_ADDR,0x0); 
-    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM: 0x"); Serial.println(c,HEX);
-    
-    
-    
+    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte, still should be 02): 0x"); Serial.println(c,HEX);
+    mx->Poke(DMM_WRITE_ADDR,0x40); 
+    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM (should be 0x40): 0x"); Serial.println(c,HEX);
 }
 
 void testOp2() {
@@ -43,11 +38,11 @@ void testOp2() {
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
   mx->Poke(CMAH_WRITE_ADDR,0);
   mx->Poke(CMAL_WRITE_ADDR,0);
-  mx->Poke(CMDI_WRITE_ADDR,0x1);
+  mx->Poke(CMDI_WRITE_ADDR,0x55);
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
-  mx->Poke(DMM_WRITE_ADDR,0); // 16 bit mode
+
   Serial.print("Done writing to shadow RAM.\n");
-  mx->Poke(DMM_WRITE_ADDR, 0x40); // 8 bit mode
+
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
   mx->Poke(CMAH_WRITE_ADDR,0);
   mx->Poke(CMAL_WRITE_ADDR,0);
@@ -55,7 +50,7 @@ void testOp2() {
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
   mx->Poke(DMM_WRITE_ADDR,0); // 16 bit mode
   
-  Serial.print("Read data from memory: 0x"); Serial.print(c,HEX); Serial.println();
+  Serial.print("Read data from memory (must be 0x55): 0x"); Serial.print(c,HEX); Serial.println();
     
 }
 #ifdef UNDEF
@@ -104,15 +99,23 @@ void setup() {
   mx->home();
   for (uint16_t c=0; c<256;c++) {
     mx->writeChar(c&0xff);
-    //mx->write_0(c);
   }    
   mx->writeChar0(5,0xc0);
   
   
   char charA[128];
   delay(100);
-  //testOp();
-  //testOp2();
+  Serial.println("********** DISPLAY **********");
+  for (int y=0; y < 10; y++) {
+    for (int x=0; x < 20; x++) {
+      Serial.print(mx->ReadDisplay(x,y)); Serial.print(" ");
+    }
+    Serial.println();
+  }
+  
+  
+  testOp();
+  testOp2();
   
   //mx->read_character(0x42, charA); // first param: which char to read
   //for (int i=0; i < 32; i++) {
