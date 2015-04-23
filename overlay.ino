@@ -116,8 +116,8 @@ void setup() {
   mx->offset(31,16); // hori=-32...31, vert=-15..16. void MAX7456::offset(int horizontal, int vertical)
   mx->home();
   for (byte c=0; c<255;c++) {
-    mx->write_0(c);
-    //mx->write_0(0x77);
+    //mx->writeChar(c);
+    mx->write_0(0x77);
   }    
   char charA[128];
   delay(100);

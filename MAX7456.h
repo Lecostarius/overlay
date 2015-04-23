@@ -135,7 +135,7 @@ class MAX7456
   void write_to_screen(char s[], byte line);
   void write_0(uint8_t c);
   size_t write(uint8_t c);
-  
+  void writeChar(uint8_t c);
   byte convert_ascii(int character);
   void offset(int horizontal, int vertical);
   void clear();

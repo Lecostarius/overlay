@@ -60,7 +60,36 @@ void MAX7456::begin(byte slave_select)
   begin();
 }
 
+void MAX7456::begin() {
+  uint8_t x, spi_junk;
+  pinMode(_slave_select,OUTPUT);
+  digitalWrite(_slave_select,HIGH); //disable device
+  // configure SPI device
+  pinMode(MAX7456_DATAOUT, OUTPUT);
+  pinMode(MAX7456_DATAIN, INPUT);
+  pinMode(MAX7456_SCK,OUTPUT);
+  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
+  SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  spi_junk=SPSR;spi_junk=SPDR;delay(25); // do we really need that? TK TODO
+  MAX7456_SPCR = SPCR;
+  
+  // now configure the MAX7456
+  Poke(VM0_WRITE_ADDR, MAX7456_reset); // soft reset
+  delay(500);
+  // set all rows to same charactor white level, 90%
+  for (x = 0; x < MAX_screen_rows; x++) {
+    Poke(x+0x10, WHITE_level_90);
+  }
+  // set basic mode: enable, PAL, Sync mode, ...
+  Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
+  delay(1);
+  // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
+  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_75_25);
+  delay(1);
+  SPCR = MAX7456_previous_SPCR;   // restore SPCR
+}  
 
+#ifdef UNDEF
 void MAX7456::begin()
 {
   byte spi_junk;
@@ -79,7 +108,7 @@ void MAX7456::begin()
   //interrupt disabled,spi enabled,msb 1st,master,clk low when idle,
   //sample on leading edge of clk,system clock/4 rate (4 meg)
 
-  digitalWrite(13,HIGH);
+  
   MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
 
   //SPCR = (1<<SPE)|(1<<MSTR);
@@ -94,7 +123,7 @@ void MAX7456::begin()
   MAX7456_spi_transfer(VM0_WRITE_ADDR);
   
   MAX7456_spi_transfer(MAX7456_reset);
-  digitalWrite(13,LOW);
+  
   digitalWrite(_slave_select,HIGH);
   delay(500);
   
@@ -124,7 +153,7 @@ void MAX7456::begin()
 
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 }
-
+#endif
  
 byte MAX7456::convert_ascii(int character) 
 {
@@ -208,14 +237,12 @@ void MAX7456::offset(int horizontal, int vertical)
 
 void MAX7456::clear() {
   Poke(DMM_WRITE_ADDR,CLEAR_display);
-  _cursor_x = CURSOR_X_MIN;
-  _cursor_y = CURSOR_Y_MIN;
+  home();
   while(Peek(DMM_READ_ADDR) & CLEAR_display) ; // wait until operation is completed and bit is set to zero again
 }
 
 // send the cursor to home
-void MAX7456::home()
-{
+void MAX7456::home() {
   _cursor_x = CURSOR_X_MIN;
   _cursor_y = CURSOR_Y_MIN;
 } 
@@ -223,8 +250,32 @@ void MAX7456::home()
 
 size_t MAX7456::write(uint8_t c) {
   write_0(c);
+  //writeChar(c);
   return(0);
 }
+
+void MAX7456::writeChar(uint8_t c) {
+  
+  uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
+  
+  // compute next cursor position
+  if (++_cursor_x >= CURSOR_X_MAX) {
+    if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
+    _cursor_x = CURSOR_X_MIN;
+  }
+  
+  Poke(DMM_WRITE_ADDR, 0); // enter 8 bit mode, no increment mode
+  //Poke(DMM_WRITE_ADDR,_char_attributes);
+  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  Poke(DMDI_WRITE_ADDR, c);
+  //Poke(DMDI_WRITE_ADDR,END_string);
+  //Poke(DMM_WRITE_ADDR,0);
+
+} 
+ 
+ 
+  
 // this is probably inefficient, as i simply modified a more general function
 // that wrote arbitrary length strings. need to check modes of writing
 // characters to MAX7456 to see if there's a better way to write one at a time
