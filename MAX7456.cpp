@@ -18,6 +18,18 @@ MAX7456::MAX7456() {
   _cursor_y = CURSOR_Y_MIN;
 }
 
+byte MAX7456::ReadDisplay(uint16_t x, uint16_t y) {
+    byte c;   
+    uint16_t linepos = y * 30 + x; // convert x,y to line position
+    
+    Poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
+    Poke(DMAH_WRITE_ADDR, linepos >> 8); // DMAH bit 1 cleared since linepos is <480
+    Poke(DMAL_WRITE_ADDR, linepos & 0xFF); 
+    c=Peek(DMDO_READ_ADDR);
+    return(c);
+}
+  
+  
 void MAX7456::Poke(byte adress, byte data) {
   digitalWrite(MAX7456SELECT,LOW); 
   MAX7456_spi_transfer(adress);
