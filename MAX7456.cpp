@@ -86,6 +86,8 @@ void MAX7456::begin() {
   // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
   Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_75_25);
   delay(1);
+  Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
+  delay(1);
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 }  
 
