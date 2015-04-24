@@ -14,20 +14,17 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
 
 void testOp() {
-    // try reading from display RAM
-    byte c;   
-    mx->Poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
-    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM (should be 0x40): 0x"); Serial.println(c,HEX);
-    c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH: "); Serial.println(c);
-    mx->Poke(DMAH_WRITE_ADDR,c & (~0x02) ); // DMAH bit 1 cleared to read character, not attributes.
-    mx->Poke(DMAH_WRITE_ADDR,c & (~0x03) ); // bit 0 is MSB of the adress, we want 0
-    c=mx->Peek(DMAH_READ_ADDR); Serial.print("Reading from DMAH 2nd time (should be 0): "); Serial.println(c);
-    mx->Poke(DMAL_WRITE_ADDR, 0x06); // we want adress 6
-    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte, should be 02): 0x"); Serial.println(c,HEX);
-    c=mx->Peek(DMDO_READ_ADDR);Serial.print("Read from display RAM: 0x"); Serial.println(c,HEX);
-    c=mx->Peek(DMAL_READ_ADDR);Serial.print("adress (lowbyte, still should be 02): 0x"); Serial.println(c,HEX);
-    mx->Poke(DMM_WRITE_ADDR,0x40); 
-    c=mx->Peek(DMM_READ_ADDR); Serial.print("Reading from DMM (should be 0x40): 0x"); Serial.println(c,HEX);
+  byte c;
+  // STAT[5] must be 0, VM0[3] must be 0:
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
+  mx->Poke(CMM_WRITE_ADDR, 0b01010000); // read from NVM into shadow RAM
+  while (mx->Peek(CMM_READ_ADDR) != 0) ; // wait until command is finished
+  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
+  mx->Poke(CMAH_WRITE_ADDR,0);
+  mx->Poke(CMAL_WRITE_ADDR,0);
+  c = mx->Peek(CMDO_READ_ADDR);
+  Serial.print("Done with testOp. Result is "); Serial.println(c);
 }
 
 void testOp2() {
@@ -115,7 +112,7 @@ void setup() {
   
   
   testOp();
-  testOp2();
+  //testOp2();
   
   //mx->read_character(0x42, charA); // first param: which char to read
   //for (int i=0; i < 32; i++) {
@@ -154,7 +151,7 @@ void loop() {
   digitalWrite(MAX7456SELECT,HIGH);
   //Serial.print("0x81=");Serial.println(c);
   Serial.println();
-#endif
+
 
   
   for ( x=0x80; x < 0xA1; x++) {
@@ -163,7 +160,7 @@ void loop() {
   x=0xEC; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
   x=0xB0; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
   x=0xC0; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
-  
+#endif  
   c = mx->Peek(0xA0);
   Serial.print("stat=");Serial.println(c);
   
