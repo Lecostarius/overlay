@@ -92,70 +92,23 @@ void MAX7456::begin() {
   // now configure the MAX7456
   Poke(VM0_WRITE_ADDR, MAX7456_reset); // soft reset
   delay(500);
+  Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
+  // set basic mode: enable, PAL, Sync mode, ...
+  Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
+  // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
+  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
+  
   // set all rows to same character white level, 90%
   for (x = 0; x < MAX_screen_rows; x++) {
     Poke(x+0x10, WHITE_level_90);
   }
-  // set basic mode: enable, PAL, Sync mode, ...
-  Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
-  //delay(1);
-  // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
-  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
-  //delay(1);
-  Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
+  
   //delay(1);
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 }  
 
 
-byte MAX7456::convert_ascii(int character) 
-{
-// for some reason the MAX7456 does not follow ascii letter
-// placement, so you have to have this odd lookup table
 
-  byte lookup_char;
-  return(character & 0xff);
-  if (character == 32)
-    lookup_char = 0x00; // blank space
-  else if (character == 48)
-    lookup_char = 0x0a; // 0
-  else if ((character > 48) && (character < 58))
-    lookup_char = (character - 48); // 1-9
-  else if ((character > 64) && (character < 90))
-    lookup_char = (character - 54); // A-Z
-  else if ((character > 96) && (character < 123))
-    lookup_char = (character - 60); // a-z
-  else if (character == 34)
-    lookup_char = 0x48; // "
-  else if (character == 39)
-    lookup_char = 0x46; // '
-  else if (character == 40)
-    lookup_char = 0x3f; // (
-  else if (character == 41)
-    lookup_char = 0x40; // )
-  else if (character == 44)
-    lookup_char = 0x45; // ,
-  else if (character == 45)
-    lookup_char = 0x49; // -
-  else if (character == 46)
-    lookup_char = 0x41; // .
-  else if (character == 47)
-    lookup_char = 0x47; // /
-  else if (character == 58)
-    lookup_char = 0x44; // :
-  else if (character == 59)
-    lookup_char = 0x43; // ;
-  else if (character == 60)
-    lookup_char = 0x4a; // <
-  else if (character == 62)
-    lookup_char = 0x4b; // >
-  else if (character == 63)
-    lookup_char = 0x42; // ?
-//  else
-//    lookup_char = 0x00; // out of range, blank space
-
- return (lookup_char);
-}
 // Adjust the horizontal and vertical offet
 // Horizontal offset between -32 and +31
 // Vertical offset between -15 and +16
@@ -534,4 +487,51 @@ void MAX7456::write_character(byte addr, char character[])
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 }
 
+byte MAX7456::convert_ascii(int character) {
+// for some reason the MAX7456 does not follow ascii letter
+// placement, so you have to have this odd lookup table
+
+  byte lookup_char;
+  return(character & 0xff);
+  if (character == 32)
+    lookup_char = 0x00; // blank space
+  else if (character == 48)
+    lookup_char = 0x0a; // 0
+  else if ((character > 48) && (character < 58))
+    lookup_char = (character - 48); // 1-9
+  else if ((character > 64) && (character < 90))
+    lookup_char = (character - 54); // A-Z
+  else if ((character > 96) && (character < 123))
+    lookup_char = (character - 60); // a-z
+  else if (character == 34)
+    lookup_char = 0x48; // "
+  else if (character == 39)
+    lookup_char = 0x46; // '
+  else if (character == 40)
+    lookup_char = 0x3f; // (
+  else if (character == 41)
+    lookup_char = 0x40; // )
+  else if (character == 44)
+    lookup_char = 0x45; // ,
+  else if (character == 45)
+    lookup_char = 0x49; // -
+  else if (character == 46)
+    lookup_char = 0x41; // .
+  else if (character == 47)
+    lookup_char = 0x47; // /
+  else if (character == 58)
+    lookup_char = 0x44; // :
+  else if (character == 59)
+    lookup_char = 0x43; // ;
+  else if (character == 60)
+    lookup_char = 0x4a; // <
+  else if (character == 62)
+    lookup_char = 0x4b; // >
+  else if (character == 63)
+    lookup_char = 0x42; // ?
+//  else
+//    lookup_char = 0x00; // out of range, blank space
+
+ return (lookup_char);
+}
 
