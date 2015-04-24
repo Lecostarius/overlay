@@ -18,12 +18,20 @@ void testOp() {
   // STAT[5] must be 0, VM0[3] must be 0:
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
   while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
-  mx->Poke(CMM_WRITE_ADDR, 0b01010000); // read from NVM into shadow RAM
-  while (mx->Peek(CMM_READ_ADDR) != 0) ; // wait until command is finished
-  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
-  mx->Poke(CMAH_WRITE_ADDR,0);
-  mx->Poke(CMAL_WRITE_ADDR,0);
-  c = mx->Peek(CMDO_READ_ADDR);
+  for (int t=0; t < 256; t++) {
+    mx->Poke(CMAH_WRITE_ADDR,t);
+    mx->Poke(CMM_WRITE_ADDR, 0b01010000); // read from NVM into shadow RAM
+    while (mx->Peek(CMM_READ_ADDR) != 0) ; // wait until command is finished
+    while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
+    Serial.println(t);
+    for (int i=0; i<55; i++) {
+      mx->Poke(CMAL_WRITE_ADDR,(i&0xff));
+      c = mx->Peek(0xCF);
+      Serial.print(c); Serial.print(" ");
+    }
+    Serial.println();
+  }
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
   Serial.print("Done with testOp. Result is "); Serial.println(c);
 }
 
@@ -160,10 +168,10 @@ void loop() {
   x=0xEC; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
   x=0xB0; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
   x=0xC0; c = mx->Peek(x); Serial.print(x,HEX); Serial.print(":"); Serial.print(c,BIN); Serial.print(",");
-#endif  
+ 
   c = mx->Peek(0xA0);
   Serial.print("stat=");Serial.println(c);
-  
+#endif   
   digitalWrite(led,LOW);
   //digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
   //digitalWrite(MAX7456SELECT,LOW);
