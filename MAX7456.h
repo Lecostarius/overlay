@@ -39,8 +39,8 @@
 #define VM0_WRITE_ADDR   0x00
 #define VM0_READ_ADDR   0x80
 #define VM1_WRITE_ADDR   0x01
-#define CMAL_READ_ADDR  0x0a
-#define CMAL_WRITE_ADDR  0x8a
+#define CMAL_READ_ADDR  0x8a
+#define CMAL_WRITE_ADDR  0x0a
 #define HOS_READ_ADDR 0x82
 #define VOS_READ_ADDR 0x83
 #define HOS_WRITE_ADDR 0x02
