@@ -75,6 +75,7 @@ void MAX7456::reset() {
   Poke(VM0_WRITE_ADDR, MAX7456_reset); // soft reset
   delay(1); // datasheet: after 100 us, STAT[6] can be polled to verify that the reset process is complete
   while (Peek(0xA0) & (1<<6)) ; // wait for RESET bit to be cleared
+  initialize();
 }
 
 // initialize the default parameters for the MAX7456
@@ -150,6 +151,10 @@ void MAX7456::home() {
   _cursor_y = CURSOR_Y_MIN;
 } 
 
+void MAX7456::show_font() {
+  clear();
+  for (int i=0; i < 256; i++) writeChar(i & 0xFF);
+}
 
 size_t MAX7456::write(uint8_t c) {
   write_0(c);

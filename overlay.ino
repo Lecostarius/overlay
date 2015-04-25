@@ -13,9 +13,11 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456_SCK  52//sck, PB1
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
 
-void testOp() {
+void printMCM() {
   byte c;
+  char puf[9];
   // STAT[5] must be 0, VM0[3] must be 0:
+  Serial.println("MAX7456");
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
   while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
   for (int t=0; t < 256; t++) {
@@ -23,16 +25,18 @@ void testOp() {
     mx->Poke(CMM_WRITE_ADDR, 0b01010000); // read from NVM into shadow RAM
     while (mx->Peek(CMM_READ_ADDR) != 0) ; // wait until command is finished
     while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
-    Serial.println(t);
-    for (int i=0; i<55; i++) {
+    //Serial.println(t);
+    for (int i=0; i<54; i++) {
       mx->Poke(CMAL_WRITE_ADDR,(i&0xff));
       c = mx->Peek(0xCF);
-      Serial.print(c); Serial.print(" ");
+      for (int bt=7; bt >=0; bt--) {
+        if (c & (1<<bt)) Serial.print("1"); else Serial.print("0");
+      }
+      Serial.println(); 
     }
-    Serial.println();
   }
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
-  Serial.print("Done with testOp. Result is "); Serial.println(c);
+  //Serial.print("Done with testOp. Result is "); Serial.println(c);
 }
 
 void testOp2() {
@@ -140,18 +144,23 @@ void loop() {
     switch(incomingByte) {  // wait for commands
     
       case 'D': // download font
-        Serial.println("sorry, not yet implemented");
-      break;
+        printMCM(); break;
       case 'r': // reset
         mx->reset();
-        Serial.println("Soft reset executed");
-      break;
+        Serial.println("Soft reset executed"); break;
       case 's': // show charset
-        testOp();
-      break;
+        Serial.println("Sorry not yet implemented"); break;
+      case 'f': // show font
+        mx->show_font(); Serial.println("Font printed"); break;
       case '?': // read status
-        Serial.print("Status byte (in binary): "); Serial.println(mx->Peek(0xA0),BIN);
-      break;
+        Serial.print("Status byte (in binary): "); Serial.println(mx->Peek(0xA0),BIN); break;
+      case 'w': // write string
+        while (incomingByte != 13) {
+          if (Serial.available() > 0) {
+            incomingByte = Serial.read(); mx->writeChar(incomingByte & 0xFF);
+          }
+        }
+        break;
       default:
         Serial.println("invalid command");
       break;
