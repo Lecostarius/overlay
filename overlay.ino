@@ -119,8 +119,9 @@ void setup() {
   }
   
   
-  testOp();
+  //testOp();
   //testOp2();
+  Serial.print("MAX7456 >");
   
   //mx->read_character(0x42, charA); // first param: which char to read
   //for (int i=0; i < 32; i++) {
@@ -132,9 +133,10 @@ void setup() {
 void loop() {
   byte c;
   int x;
+  int incomingByte;
   
   if (Serial.available() > 0) {
-    incomingByte = Serial.read();
+    incomingByte = Serial.read(); Serial.println();
     switch(incomingByte) {  // wait for commands
     
       case 'D': // download font
@@ -142,18 +144,19 @@ void loop() {
       break;
       case 'r': // reset
         mx->reset();
+        Serial.println("Soft reset executed");
       break;
       case 's': // show charset
         testOp();
       break;
       case '?': // read status
-        Serial.println(mx->Peek(0xA0),BIN);
+        Serial.print("Status byte (in binary): "); Serial.println(mx->Peek(0xA0),BIN);
       break;
       default:
         Serial.println("invalid command");
       break;
     }
-    Serial.println("MAX7456>");
+    Serial.print("MAX7456>");
   }
   
   //Serial.println("Loop!");
