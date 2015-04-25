@@ -85,7 +85,7 @@ void MAX7456::initialize() {
   // set basic mode: enable, PAL, Sync mode, ...
   Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
   // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
-  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
+  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50 | BACKGROUND_BRIGHTNESS_21);
   // set all rows to same character white level, 90%
   for (int x = 0; x < MAX_screen_rows; x++) {
     Poke(x+0x10, WHITE_level_90);
