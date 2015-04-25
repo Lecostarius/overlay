@@ -144,6 +144,8 @@ class MAX7456 {
   byte ReadDisplay(uint16_t x, uint16_t y);
   void begin();
   void begin(byte slave_select);
+  void reset();
+  void initialize();
   void write_to_screen(char s[], byte x, byte y, byte blink, byte invert);
   void write_to_screen(char s[], byte x, byte y);
   void write_to_screen(char s[], byte line);

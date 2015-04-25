@@ -69,6 +69,27 @@ void MAX7456::begin(byte slave_select)
   begin();
 }
 
+// do a soft reset of the MAX7456
+void MAX7456::reset() {
+  Poke(VM0_WRITE_ADDR, MAX7456_reset); // soft reset
+  delay(1); // datasheet: after 100 us, STAT[6] can be polled to verify that the reset process is complete
+  while (Peek(0xA0) & (1<<6)) ; // wait for RESET bit to be cleared
+}
+
+// initialize the default parameters for the MAX7456
+// your personal preferences go here
+void MAX7456::initialize() {
+  Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
+  // set basic mode: enable, PAL, Sync mode, ...
+  Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
+  // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
+  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
+  // set all rows to same character white level, 90%
+  for (x = 0; x < MAX_screen_rows; x++) {
+    Poke(x+0x10, WHITE_level_90);
+  }
+}  
+  
 void MAX7456::begin() {
   uint8_t x, spi_junk;
   
@@ -88,20 +109,9 @@ void MAX7456::begin() {
   SPSR = (0<<SPIF)|(0<<WCOL)|(0<<SPI2X);
   spi_junk=SPSR;spi_junk=SPDR;delay(25); // do we really need that? TK TODO
   
-  
   // now configure the MAX7456
-  Poke(VM0_WRITE_ADDR, MAX7456_reset); // soft reset
-  delay(500);
-  Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
-  // set basic mode: enable, PAL, Sync mode, ...
-  Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
-  // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
-  Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
-  
-  // set all rows to same character white level, 90%
-  for (x = 0; x < MAX_screen_rows; x++) {
-    Poke(x+0x10, WHITE_level_90);
-  }
+  reset();
+  initialize();
   
   //delay(1);
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
