@@ -132,6 +132,30 @@ void setup() {
 void loop() {
   byte c;
   int x;
+  
+  if (Serial.available() > 0) {
+    incomingByte = Serial.read();
+    switch(incomingByte) {  // wait for commands
+    
+      case 'D': // download font
+        Serial.println("sorry, not yet implemented");
+      break;
+      case 'r': // reset
+        mx->reset();
+      break;
+      case 's': // show charset
+        testOp();
+      break;
+      case '?': // read status
+        Serial.println(mx->Peek(0xA0),BIN);
+      break;
+      default:
+        Serial.println("invalid command");
+      break;
+    }
+    Serial.println("MAX7456>");
+  }
+  
   //Serial.println("Loop!");
   // put your main code here, to run repeatedly: 
   digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
