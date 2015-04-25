@@ -13,6 +13,74 @@ MAX7456 *mx = new MAX7456();
 #define MAX7456_SCK  52//sck, PB1
 #define MAX7456SELECT 9//pin 9 (one of the motor pwm, used for octo only)
 
+// this is a copy of the character memory of the MAX7456  
+byte charmem[64];
+
+void receiveMCM() {
+#define COLNUM 64 // could be 54 or 64 depending on format, we need only 54
+#define BUFSIZE 15
+  char buffer[BUFSIZE];
+  
+  uint8_t bufX=0; // how full is the input buffer? points to the next available free position
+  uint8_t lineX=0; // line in char (0..63, or 0..53)
+  uint16_t charX=0; // character index (0..255)
+  
+  uint8_t readState=0; // 0 - waiting for the "MAX7456" string at the beginning, 1 - reading lines
+  int incomingByte;
+  while (charX < 256) {
+  if (Serial.available() > 0) {
+    incomingByte = Serial.read(); 
+    if (incomingByte != 13) {
+      buffer[bufX++] = incomingByte & 0xFF;
+      if (bufX >= BUFSIZE) bufX = BUFSIZE - 1;
+    } else {
+      // got an entire line... process it!
+      if (readState == 0) {
+        if (strcmp("MAX7456",buffer) == 0) readState = 1;
+      } else {
+        // got a data line. Parse into a 1-byte value "c":
+        char c = 0;
+        for (int i=7; i >= 0; i--) if (buffer[i] = '1') c |= (1<<i);
+        // now we have c
+        //charmem[lineX] = c;
+        
+        Serial.print(lineX); Serial.print(" "); Serial.println(charX);
+        if (++lineX >= COLNUM) { lineX=0; charX++; }
+      }
+      
+    } // if incomingByte != 13, else part
+  } // if Serial.available() > 0
+  } // while charX > 256
+}
+
+// write a set of 54 character bytes into position "charIdx" into the NVM memory
+void writeCharMem(byte *characterBytes, int charIdx) {
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
+  mx->Poke(CMAH_WRITE_ADDR,(charIdx & 0xFF));
+  for (int t=0; t < 54; t++) {
+    mx->Poke(CMAL_WRITE_ADDR, (t & 0xFF));
+    mx->Poke(CMDI_WRITE_ADDR, characterBytes[t]);
+  }
+  mx->Poke(CMM_WRITE_ADDR, 0b10100000); // write from shadow RAM into NVM
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+}
+
+// read data from NVM character number "charX" into characterData[0..53]
+void getNVMchar(byte *characterBytes, int charX) {
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
+  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
+  mx->Poke(CMAH_WRITE_ADDR,charX);
+  mx->Poke(CMM_WRITE_ADDR, 0b01010000); // read from NVM into shadow RAM
+  while (mx->Peek(CMM_READ_ADDR) != 0) ; // wait until command is finished
+  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
+  for (int i=0; i<54; i++) {
+    mx->Poke(CMAL_WRITE_ADDR,(i&0xff));
+    characterBytes[i] = mx->Peek(0xCF);
+  }
+  mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
+}
+
 void printMCM() {
   byte c;
   char puf[9];
@@ -155,11 +223,21 @@ void loop() {
       case '?': // read status
         Serial.print("Status byte (in binary): "); Serial.println(mx->Peek(0xA0),BIN); break;
       case 'w': // write string
-        while (incomingByte != 13) {
+        while (incomingByte != 13) { // CR ends the sequence
           if (Serial.available() > 0) {
             incomingByte = Serial.read(); mx->writeChar(incomingByte & 0xFF);
           }
         }
+        break;
+      case 'b': // burn into NVM
+        getNVMchar(charmem, 1);
+        for (int i=0; i < 54; i++) {Serial.print(charmem[i]); Serial.print(",");}
+        Serial.println();
+        writeCharMem(charmem, 0);
+        Serial.println("Copied char 1 to char 0");
+        getNVMchar(charmem,0);
+        for (int i=0; i < 54; i++) {Serial.print(charmem[i]); Serial.print(",");}
+        Serial.println();
         break;
       default:
         Serial.println("invalid command");
