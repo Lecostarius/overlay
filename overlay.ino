@@ -30,6 +30,16 @@ MAX7456 *mx = new MAX7456();
 // this is a copy of the character memory of the MAX7456 (one character)  
 byte charmem[64];
 
+// receiving one 0 or 1 in ASCII takes at 115200 baud 10 bit or 1/11520 sec or 86 us
+// receiving one bytes is 9 chars, so it takes 781 us. Receiving one set of
+// 54 bytes (for one character) takes 42 ms. Serial.read() buffers up to 64 bytes.
+// So we could read the data as it comes, and then, write it all via SPI away
+// and flash it. The latter will take 54*9us+12ms or 12.5 ms. During this time,
+// the serial line will receive 12.5ms/86us or 145 bytes, which is too much.
+// Therefore, we must either reduce the serial speed to 1/4 (38400), or we have
+// to write the NVM asynchronously (so let it write while we continue handling the
+// serial).
+
 void receiveMCM() {
 #define COLNUM 64 // could be 54 or 64 depending on format, we need only 54
 #define BUFSIZE 15
@@ -56,10 +66,14 @@ void receiveMCM() {
         char c = 0;
         for (int i=7; i >= 0; i--) if (buffer[i] = '1') c |= (1<<i);
         // now we have c
-        //charmem[lineX] = c;
+        charmem[lineX] = c;
         
         Serial.print(lineX); Serial.print(" "); Serial.println(charX);
-        if (++lineX >= COLNUM) { lineX=0; charX++; }
+        if (++lineX >= COLNUM) { 
+          // we have all the 54 bytes for this character.
+          //writeCharMemAsync(charmem, charX); // write to NVM. Takes about 500 us for SPI to shadow RAM, launches the NVM write, but does not wait for completion.
+          lineX=0; charX++; 
+        }
       }
       
     } // if incomingByte != 13, else part
@@ -68,7 +82,12 @@ void receiveMCM() {
 }
 
 // write a set of 54 character bytes into position "charIdx" into the NVM memory
-void writeCharMem(byte *characterBytes, int charIdx) {
+// this is asynchronous, so we do NOT wait until the data is really written, but
+// return immediately. This switches the OSD off, but not on again.
+// It is recommended to use writeCharMem() which is the synchronous version, unless
+// you cannot afford to wait the roughly 13 ms it takes the NVM to complete the write
+// operation.
+void writeCharMemAsync(byte *characterBytes, int charIdx) {
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
   while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
   mx->Poke(CMAH_WRITE_ADDR,(charIdx & 0xFF));
@@ -77,6 +96,11 @@ void writeCharMem(byte *characterBytes, int charIdx) {
     mx->Poke(CMDI_WRITE_ADDR, characterBytes[t]);
   }
   mx->Poke(CMM_WRITE_ADDR, 0b10100000); // write from shadow RAM into NVM
+}
+
+void writeCharMem(byte *characterBytes, int charIdx) {
+  writeCharMemAsync(characterBytes, charIdx);
+  while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
 }
 
