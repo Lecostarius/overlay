@@ -41,37 +41,46 @@ byte charmem[64];
 // serial).
 
 void receiveMCM() {
-#define COLNUM 64 // could be 54 or 64 depending on format, we need only 54
+#define COLNUM 54 // could be 54 or 64 depending on format, we need only 54
 #define BUFSIZE 15
-  char buffer[BUFSIZE];
-  
+  char buffer[BUFSIZE+1];
+  uint32_t charN=0;
   uint8_t bufX=0; // how full is the input buffer? points to the next available free position
   uint8_t lineX=0; // line in char (0..63, or 0..53)
   uint16_t charX=0; // character index (0..255)
   
   uint8_t readState=0; // 0 - waiting for the "MAX7456" string at the beginning, 1 - reading lines
   int incomingByte;
+  Serial.println("receive- waiting for MCM file");
+ 
+  
   while (charX < 256) {
   if (Serial.available() > 0) {
-    incomingByte = Serial.read(); 
+    incomingByte = Serial.read(); charN++;
+    //if (++charN < 32) Serial.print(incomingByte);
     if (incomingByte != 13) {
       buffer[bufX++] = incomingByte & 0xFF;
       if (bufX >= BUFSIZE) bufX = BUFSIZE - 1;
     } else {
       // got an entire line... process it!
+      buffer[bufX] = 0; // string end
+      bufX = 0;
+      
       if (readState == 0) {
-        if (strcmp("MAX7456",buffer) == 0) readState = 1;
+        if (charN<32) {Serial.println();Serial.println(buffer);}
+        if (strcmp(buffer,"MAX7456") == 0) readState = 1;
       } else {
         // got a data line. Parse into a 1-byte value "c":
         char c = 0;
-        for (int i=7; i >= 0; i--) if (buffer[i] = '1') c |= (1<<i);
+        for (int i=7; i >= 0; i--) if (buffer[i] == '1') c |= (1<<i);
         // now we have c
         charmem[lineX] = c;
         
-        Serial.print(lineX); Serial.print(" "); Serial.println(charX);
+        //Serial.print(lineX); Serial.print(" "); Serial.println(charX);
         if (++lineX >= COLNUM) { 
           // we have all the 54 bytes for this character.
-          //writeCharMemAsync(charmem, charX); // write to NVM. Takes about 500 us for SPI to shadow RAM, launches the NVM write, but does not wait for completion.
+          Serial.println(charX);
+          writeCharMemAsync(charmem, charX); // write to NVM. Takes about 500 us for SPI to shadow RAM, launches the NVM write, but does not wait for completion.
           lineX=0; charX++; 
         }
       }
@@ -79,6 +88,7 @@ void receiveMCM() {
     } // if incomingByte != 13, else part
   } // if Serial.available() > 0
   } // while charX > 256
+  Serial.println("Done.");
 }
 
 // write a set of 54 character bytes into position "charIdx" into the NVM memory
@@ -179,8 +189,8 @@ void loop() {
       case 'r': // reset
         mx->reset();
         Serial.println("Soft reset executed"); break;
-      case 's': // show charset
-        Serial.println("Sorry not yet implemented"); break;
+      case 'R': // Receive MCM file
+        receiveMCM();  break;
       case 'f': // show font
         mx->show_font(); Serial.println("Font printed"); break;
       case '?': // read status
