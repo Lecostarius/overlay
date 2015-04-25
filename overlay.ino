@@ -41,7 +41,7 @@ byte charmem[64];
 // serial).
 
 void receiveMCM() {
-#define COLNUM 54 // could be 54 or 64 depending on format, we need only 54
+#define COLNUM 64 // could be 54 or 64 depending on format, we need only 54
 #define BUFSIZE 15
   char buffer[BUFSIZE+1];
   uint32_t charN=0;
@@ -67,20 +67,23 @@ void receiveMCM() {
       bufX = 0;
       
       if (readState == 0) {
-        if (charN<32) {Serial.println();Serial.println(buffer);}
+        //if (charN<32) {Serial.println();Serial.println(buffer);}
         if (strcmp(buffer,"MAX7456") == 0) readState = 1;
       } else {
         // got a data line. Parse into a 1-byte value "c":
-        char c = 0;
-        for (int i=7; i >= 0; i--) if (buffer[i] == '1') c |= (1<<i);
+        byte c = 0;
+        for (int i=0; i <8; i++) if (buffer[i] == '1') c |= (1<<(7-i)); // the order is highest bit first, this is why we have to do 1<<(7-i)
         // now we have c
-        charmem[lineX] = c;
-        
+        charmem[lineX] = (c & 0xFF);
+        if (charN < 256) {
+          //Serial.print("charmem: "); Serial.print(buffer); Serial.print(", c="); Serial.println(c,BIN);
+        }
         //Serial.print(lineX); Serial.print(" "); Serial.println(charX);
         if (++lineX >= COLNUM) { 
           // we have all the 54 bytes for this character.
-          Serial.println(charX);
+          
           writeCharMemAsync(charmem, charX); // write to NVM. Takes about 500 us for SPI to shadow RAM, launches the NVM write, but does not wait for completion.
+          Serial.print(charX); Serial.print(" ");
           lineX=0; charX++; 
         }
       }
@@ -134,7 +137,7 @@ void printMCM() {
   Serial.println("MAX7456");
   for (int t=0; t < 256; t++) {
     getNVMchar(charmem, t);
-    for (int i=0; i<54; i++) {
+    for (int i=0; i<COLNUM; i++) {
       for (int bt=7; bt >=0; bt--) {
         if (charmem[i] & (1<<bt)) Serial.print("1"); else Serial.print("0");
       }
