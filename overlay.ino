@@ -58,7 +58,7 @@ void receiveMCM() {
   if (Serial.available() > 0) {
     incomingByte = Serial.read(); charN++;
     //if (++charN < 32) Serial.print(incomingByte);
-    if (incomingByte != 13) {
+    if (incomingByte != 13 && ( (lineX != COLNUM-1) || (charX != 255) || (bufX != 7) )) {
       buffer[bufX++] = incomingByte & 0xFF;
       if (bufX >= BUFSIZE) bufX = BUFSIZE - 1;
     } else {
