@@ -10,6 +10,7 @@
 #include <Arduino.h>
 #include "MAX7456.h"
 
+
 // Constructor
 MAX7456::MAX7456() {
   _slave_select = MAX7456SELECT;
@@ -85,7 +86,7 @@ void MAX7456::initialize() {
   // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
   Poke(VM1_WRITE_ADDR, BLINK_DUTY_CYCLE_50_50);
   // set all rows to same character white level, 90%
-  for (x = 0; x < MAX_screen_rows; x++) {
+  for (int x = 0; x < MAX_screen_rows; x++) {
     Poke(x+0x10, WHITE_level_90);
   }
 }  
