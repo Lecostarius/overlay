@@ -167,11 +167,10 @@ class MAX7456 {
   void read_character(byte addr, char character[]);
   void write_character(byte addr, char character[]);
  private:
-  //  byte MAX7456_spi_transfer(unsigned char data);
-  byte MAX7456_SPCR, MAX7456_previous_SPCR;
-  byte _slave_select;
-  byte _char_attributes;
-  byte _cursor_x, _cursor_y;
+  byte MAX7456_SPCR, MAX7456_previous_SPCR; // store the desired and previous SPCR register of the Atmega 
+  byte _slave_select; // Atmega pin that is connected to MAX7456 chip select
+  byte _char_attributes; // standard character attributes if we do not set any
+  byte _cursor_x, _cursor_y; // cursor position in character memory (x=0..29, y=0..15 or 0..12)
 };
 
 

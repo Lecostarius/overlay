@@ -19,6 +19,7 @@ MAX7456::MAX7456() {
   _cursor_y = CURSOR_Y_MIN;
 }
 
+// Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
 byte MAX7456::ReadDisplay(uint16_t x, uint16_t y) {
     byte c;   
     uint16_t linepos = y * 30 + x; // convert x,y to line position
@@ -36,23 +37,20 @@ void MAX7456::Poke(byte adress, byte data) {
   MAX7456_spi_transfer(adress);
   MAX7456_spi_transfer(data); 
   digitalWrite(MAX7456SELECT,HIGH);
-  //delay(1);
 }
 byte MAX7456::Peek(byte adress) {
   byte retval=0;
-  //delay(1);
   digitalWrite(MAX7456SELECT,LOW); 
-  //delay(1);
   MAX7456_spi_transfer(adress);
-  //delay(1);
   retval=MAX7456_spi_transfer(0xff);
-  //delay(1);
   digitalWrite(MAX7456SELECT,HIGH);
-  //delay(1);
   return(retval);
 }
     
-
+// basic SPI transfer: use the Atmega hardware to send and receive one byte
+// over SPI. MAX7456_spi_transfer does NOT set chip select, so it is a bit of
+// a misnomer: it will do SPI data transfer with whatever SPI device is connected
+// and which has its CS set active.
 byte MAX7456::MAX7456_spi_transfer(volatile char data) {
   MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
   SPCR = MAX7456_SPCR;  // set SPCR to what we need
@@ -62,7 +60,6 @@ byte MAX7456::MAX7456_spi_transfer(volatile char data) {
   SPCR = MAX7456_previous_SPCR;
   return SPDR;                    // return the received byte
 }
-
 
 void MAX7456::begin(byte slave_select)
 {
@@ -100,22 +97,21 @@ void MAX7456::begin() {
   pinMode(MAX7456_DATAOUT, OUTPUT);
   pinMode(MAX7456_DATAIN, INPUT);
   pinMode(MAX7456_SCK,OUTPUT);
-  
-  // configure SPI device on the microcontroller
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
+
   MAX7456_SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  // configure SPI device on the microcontroller
   // SPIF - SPI interrupt flag
   // WCOL - write collision flag
   // SPI2X - double speed SPI flag
+  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
   SPCR = MAX7456_SPCR;
   SPSR = (0<<SPIF)|(0<<WCOL)|(0<<SPI2X);
   spi_junk=SPSR;spi_junk=SPDR;delay(25); // do we really need that? TK TODO
   
   // now configure the MAX7456
   reset();
-  initialize();
   
-  //delay(1);
+  // we are done, restore SPI interface in case other peripherals are using it too
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 }  
 
