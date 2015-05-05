@@ -132,7 +132,11 @@ void getNVMchar(byte *characterBytes, int charX) {
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
 }
 
-// read all characters from NVM and print them to Serial in the format of Maxim's .mcm files:
+// read all characters from NVM and print them to Serial in the format of Maxim's .mcm files
+// note that the max7456 does not care whether the two bits that define one pixel are 11 or 01,
+// both is transparent. However most of the character editors I found do care and incorrectly
+// do not work on 11 pixels. So, printMCM01 takes care of that and will transform a 11 into a 01,
+// while printMCM will print the original content of the NVM memory.
 void printMCM() {
   Serial.println("MAX7456");
   for (int t=0; t < 256; t++) {
@@ -144,7 +148,24 @@ void printMCM() {
       Serial.println(); 
     }
   }
-
+}
+void printMCM01() {
+  uint8_t c;
+  Serial.println("MAX7456");
+  for (int t=0; t < 256; t++) {
+    getNVMchar(charmem, t); 
+    for (int i=0; i < COLNUM; i++) {
+      for (int bt=6; bt >= 0; bt -= 2) {
+        c = charmem[i] & (3 << bt);
+        c = c >> bt;
+        if (c==0) Serial.print("00");
+        if (c==1) Serial.print("01");
+        if (c==2) Serial.print("10");
+        if (c==3) Serial.print("01");
+      }
+      Serial.println();
+    }
+  }
 }
 
 void setup() {
@@ -189,6 +210,8 @@ void loop() {
     
       case 'D': // download font
         printMCM(); break;
+      case 'd': // download font, transform 11 to 01
+        printMCM01(); break;
       case 'r': // reset
         mx->reset();
         Serial.println("Soft reset executed"); break;
