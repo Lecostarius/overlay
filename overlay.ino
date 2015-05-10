@@ -168,6 +168,45 @@ void printMCM01() {
   }
 }
 
+void printInitPattern() {
+  mx->writeCharXY(0x16,2,13);
+  mx->writeCharXY(0x17,2,12); 
+  mx->writeCharXY(0x17,2,14); 
+  mx->writeCharXY(0x19,6,13);
+  mx->writeCharXY(0x18,6,12);
+  mx->writeCharXY(0x18,6,14);
+  mx->writeCharXY(0x01,3,11);
+  mx->writeCharXY(0x01,4,11);
+  mx->writeCharXY(0x01,5,11);
+  mx->writeCharXY(0x11,3,15);
+  mx->writeCharXY(0x11,4,15);
+  mx->writeCharXY(0x11,5,15);
+  
+  mx->writeCharXY(0x0E,3,13); mx->writeCharXY(0x0E,4,13); mx->writeCharXY(0x0E,5,13); 
+  
+  
+  mx->writeCharXY(0x16,12,13);
+  mx->writeCharXY(0x17,12,12); 
+  mx->writeCharXY(0x17,12,14); 
+  mx->writeCharXY(0x19,16,13);
+  mx->writeCharXY(0x18,16,12);
+  mx->writeCharXY(0x18,16,14);
+  mx->writeCharXY(0x01,13,11);
+  mx->writeCharXY(0x01,14,11);
+  mx->writeCharXY(0x01,15,11);
+  mx->writeCharXY(0x11,13,15);
+  mx->writeCharXY(0x11,14,15);
+  mx->writeCharXY(0x11,15,15);
+  
+  mx->writeCharXY(0x86,13,13); mx->writeCharXY(0x87,14,13); mx->writeCharXY(0x88,1 5,13); 
+  
+  
+  mx->writeCharXY(0x16, 5,5);  
+  mx->writeCharXY('A',1,1);
+  mx->writeCharXY('0',0,0);
+  mx->writeCharXY('1',1,0);
+}
+  
 void setup() {
   Serial.begin(115200);
   Serial.println("overlay code started\n");
@@ -194,7 +233,7 @@ void setup() {
     }
     Serial.println();
   }
- 
+  printInitPattern();
   Serial.print("MAX7456 >");
 }
 
