@@ -158,6 +158,21 @@ size_t MAX7456::write(uint8_t c) {
   return(0);
 }
 
+void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
+  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
+  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  Poke(DMDI_WRITE_ADDR, c);
+}
+
+void MAX7456::writeCharXY(uint8_t c, uint8_t x, uint8_t y) {
+  uint16_t linepos;
+  if (x > CURSOR_X_MAX) x = CURSOR_X_MAX;
+  if (y > CURSOR_Y_MAX) y = CURSOR_Y_MAX;
+  _cursor_y = y; _cursor_x = x;
+  writeCharLinepos(c, _cursor_y * 30 + _cursor_x); // convert x,y to line position
+}  
+  
 void MAX7456::writeChar(uint8_t c) {
   uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
   // compute next cursor position
@@ -165,11 +180,7 @@ void MAX7456::writeChar(uint8_t c) {
     if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
     _cursor_x = CURSOR_X_MIN;
   }
-  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
-  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
-  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
-  Poke(DMDI_WRITE_ADDR, c);
-
+  writeCharLinepos(c, linepos);
 } 
  
 void MAX7456::writeChar0(uint8_t c, uint8_t attributes) {
