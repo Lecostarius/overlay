@@ -151,12 +151,6 @@ void MAX7456::show_font() {
   for (int i=0; i < 256; i++) writeChar(i & 0xFF);
 }
 
-size_t MAX7456::write(uint8_t c) {
-  write_0(c);
-  //writeChar(c);
-  return(0);
-}
-
 void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
   Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
   Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
@@ -199,7 +193,41 @@ void MAX7456::writeChar0(uint8_t c, uint8_t attributes) {
   Poke(DMDI_WRITE_ADDR, attributes);
 } 
  
- 
+void MAX7456::blink(byte onoff) {
+  if (onoff) {
+      _char_attributes |= 0x10;
+  } else {
+      _char_attributes &= ~0x10;
+  }
+}
+
+void MAX7456::blink() {
+  blink(1);
+}
+
+void MAX7456::noBlink() {
+  blink(0);
+}
+
+
+void MAX7456::invert(byte onoff) {
+  if (onoff) {
+      _char_attributes |= 0x08;
+  } else {
+      _char_attributes &= ~0x08;
+  }
+}
+
+void MAX7456::invert() {
+  invert(1);
+}
+
+void MAX7456::noInvert() {
+  invert(0);
+}
+
+
+/* Dead code following */
  
   
 // this is probably inefficient, as i simply modified a more general function
@@ -324,7 +352,6 @@ void MAX7456::write_to_screen(char s[], byte x, byte y, byte blink, byte invert)
   if (invert){
     settings |= (1 << 3);       // forces nth bit of x to be 1.  all other bits left alone.
   }
-
   
   digitalWrite(_slave_select,LOW);
 
@@ -357,51 +384,6 @@ void MAX7456::write_to_screen(char s[], byte x, byte y, byte blink, byte invert)
   SPCR = MAX7456_previous_SPCR;   // restore SPCR
 } 
 
-
-void MAX7456::blink(byte onoff)
-{
-  if (onoff)
-    {
-      _char_attributes |= 0x10;
-    }
-  else
-    {
-      _char_attributes &= ~0x10;
-    }
-}
-
-void MAX7456::blink()
-{
-  blink(1);
-}
-
-void MAX7456::noBlink()
-{
-  blink(0);
-}
-
-
-void MAX7456::invert(byte onoff)
-{
-  if (onoff)
-    {
-      _char_attributes |= 0x08;
-    }
-  else
-    {
-      _char_attributes &= ~0x08;
-    }
-}
-
-void MAX7456::invert()
-{
-  invert(1);
-}
-
-void MAX7456::noInvert()
-{
-  invert(0);
-}
 
 
 
