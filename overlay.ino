@@ -117,7 +117,7 @@ void writeCharMem(byte *characterBytes, int charIdx) {
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // enable OSD again
 }
 
-// read data from NVM character number "charX" into characterData[0..53]
+// read data from NVM character number "charX" into characterBytes[0..53]
 void getNVMchar(byte *characterBytes, int charX) {
   mx->Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|VIDEO_MODE_PAL|SYNC_MODE_AUTO); // disable OSD
   while (mx->Peek(0xA0) & (1<<5)); // wait until STAT[5] is 0
@@ -198,7 +198,7 @@ void printInitPattern() {
   mx->writeCharXY(0x11,14,15);
   mx->writeCharXY(0x11,15,15);
   
-  mx->writeCharXY(0x86,13,13); mx->writeCharXY(0x87,14,13); mx->writeCharXY(0x88,1 5,13); 
+  mx->writeCharXY(0x86,13,13); mx->writeCharXY(0x87,14,13); mx->writeCharXY(0x88,15,13); 
   
   
   mx->writeCharXY(0x16, 5,5);  
