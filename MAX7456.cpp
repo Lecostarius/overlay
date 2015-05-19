@@ -142,9 +142,32 @@ void MAX7456::clear() {
 
 // send the cursor to home
 void MAX7456::home() {
-  _cursor_x = CURSOR_X_MIN;
-  _cursor_y = CURSOR_Y_MIN;
+  setCursor(CURSOR_X_MIN, CURSOR_Y_MIN);
 } 
+// send the cursor to position (x,y)
+void MAX7456::setCursor(uint8_t x, uint8_t y) {
+  if (x > CURSOR_X_MAX) x = CURSOR_X_MAX;
+  if (y > CURSOR_Y_MAX) y = CURSOR_Y_MAX;
+  _cursor_y = y; _cursor_x = x;
+}
+void MAX7456::advanceCursor() {
+  if (++_cursor_x >= CURSOR_X_MAX) {
+    if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
+    _cursor_x = CURSOR_X_MIN;
+  }
+}
+
+void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
+  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
+  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  Poke(DMDI_WRITE_ADDR, c);
+}
+
+void MAX7456::writeCharXY(uint8_t c, uint8_t x, uint8_t y) {
+  setCursor(x,y); 
+  writeChar(c); 
+}  
 
 void MAX7456::show_font() {
   clear();
@@ -155,52 +178,23 @@ void MAX7456::show_font() {
    Single character printing primitives
    - writeChar
    - writeCharWithAttributes
-   
    - writeCharXY
-   -
-   - writeCharLinepos
    --------------------------------------------------------------------------- */
    
-void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
-  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
-  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
-  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
-  Poke(DMDI_WRITE_ADDR, c);
-}
 
-void MAX7456::writeCharXY(uint8_t c, uint8_t x, uint8_t y) {
-  uint16_t linepos;
-  if (x > CURSOR_X_MAX) x = CURSOR_X_MAX;
-  if (y > CURSOR_Y_MAX) y = CURSOR_Y_MAX;
-  _cursor_y = y; _cursor_x = x;
-  writeCharLinepos(c, _cursor_y * 30 + _cursor_x); // convert x,y to line position
-}  
-  
+
 void MAX7456::writeChar(uint8_t c) {
-  uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
-  // compute next cursor position
-  if (++_cursor_x >= CURSOR_X_MAX) {
-    if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
-    _cursor_x = CURSOR_X_MIN;
-  }
-  writeCharLinepos(c, linepos);
+  writeCharLinepos(c, _cursor_y * 30 + _cursor_x);
+  advanceCursor(); // compute next cursor position
 } 
  
 void MAX7456::writeCharWithAttributes(uint8_t c, uint8_t attributes) {
   uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
-  // compute next cursor position
-  if (++_cursor_x >= CURSOR_X_MAX) {
-    if (++_cursor_y >= CURSOR_Y_MAX) _cursor_y = CURSOR_Y_MIN;
-    _cursor_x = CURSOR_X_MIN;
-  }
-  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
-  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
-  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
-  Poke(DMDI_WRITE_ADDR, c);
-
+  writeCharLinepos(c, linepos);
   Poke(DMAH_WRITE_ADDR, 0x02 | linepos>>8);
   Poke(DMAL_WRITE_ADDR, linepos&0xFF);
   Poke(DMDI_WRITE_ADDR, attributes);
+  advanceCursor();
 } 
  
 void MAX7456::blink(byte onoff) {

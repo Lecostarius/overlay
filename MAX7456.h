@@ -159,7 +159,9 @@ class MAX7456 {
   void offset(int horizontal, int vertical);  // set the horizontal (-32..31)/vertical (-16..15) offset in pixel. This is where the upper left corner is.
   void clear();                         // clears screen and sets cursor home
   void home();                          // sets cursor home (left upper corner)
-
+  void setCursor(uint8_t x, uint8_t y); // sets cursor to (x,y)
+  void advanceCursor();                 // advance cursor one position
+  
   /* the following functions set the default mode bits for incremental mode printing of the MAX7456. */
   void blink(byte onoff);
   void blink();
