@@ -61,8 +61,7 @@ byte MAX7456::MAX7456_spi_transfer(volatile char data) {
   return SPDR;                    // return the received byte
 }
 
-void MAX7456::begin(byte slave_select)
-{
+void MAX7456::begin(byte slave_select) {
   _slave_select = slave_select;
   begin();
 }
@@ -199,6 +198,9 @@ void MAX7456::writeChar0(uint8_t c, uint8_t attributes) {
   Poke(DMAL_WRITE_ADDR, linepos&0xFF);
   Poke(DMDI_WRITE_ADDR, attributes);
 } 
+ 
+ 
+ 
   
 // this is probably inefficient, as i simply modified a more general function
 // that wrote arbitrary length strings. need to check modes of writing
@@ -226,7 +228,7 @@ void MAX7456::write_0(uint8_t c)
   // To print non-ascii character, this line must either be commented out
   // or convert_ascii() needs to be modified to make sure it doesn't conflict
   // with the special characters being printed.
-  c = convert_ascii(c);
+  // c = convert_ascii(c);
 
   MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
   SPCR = MAX7456_SPCR;  // set SPCR to what we need
@@ -338,7 +340,7 @@ void MAX7456::write_to_screen(char s[], byte x, byte y, byte blink, byte invert)
   
   while(s[local_count]!='\0') // write out full screen
   {
-    screen_char = convert_ascii(s[local_count]);
+    screen_char = s[local_count];
     MAX7456_spi_transfer(DMDI_WRITE_ADDR);
     MAX7456_spi_transfer(screen_char);
     local_count++;
@@ -401,160 +403,5 @@ void MAX7456::noInvert()
   invert(0);
 }
 
-// Returns all 0s for some reason
-void MAX7456::read_character(byte addr, char character[]) 
-{
-  // Enable the SPI
-  // Write VM0[3] = 0 to disable the OSD image.
-  Serial.println("Enable SPI, disable OSD output (section)");
 
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = MAX7456_SPCR;  // set SPCR to what we need
-
-  digitalWrite(_slave_select, LOW);
-  Serial.println("Enable SPI");
-  MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  Serial.println("Sent VM0_WRITE_ADDR");
-  MAX7456_spi_transfer(0x00|VERTICAL_SYNC_NEXT_VSYNC); // double check that the other bits can be zero
-  delay(100); // Not sure if this delay is needed. It's used in the init code
-  
-  Serial.println("Select character by address");
-  // Write CMAH[7:0]  = xxH  to select the character (0â€“255) to be read
-  MAX7456_spi_transfer(CMAH_WRITE_ADDR);
-  MAX7456_spi_transfer(addr);
-
-  Serial.println("Read character data from NVRAM to Shadow RAM");
-  // Write CMM[7:0] = 0101xxxx to read the character data from the NVM to the shadow RAM
-  MAX7456_spi_transfer(CMM_WRITE_ADDR);
-  MAX7456_spi_transfer(0b01010000); // Double check that bits 0-3 can be zero
-  
-  char test[64];
-
-  for(int i = 0; i < 54; i++)
-  {
-    // Write CMAL[7:0] = xxH to select the 4-pixel byte (0â€“63) in the character to be read
-    MAX7456_spi_transfer(CMAL_WRITE_ADDR);
-    MAX7456_spi_transfer(i);
-
-    // Read CMDO[7:0] = xxH to read the selected 4-pixel byte of data
-    test[i] = MAX7456_spi_transfer(CMDO_READ_ADDR);
-    character[i] = MAX7456_spi_transfer(i);
-  }
-
-  // Write VM0[3] = 1 to enable the OSD image display.
-  MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE);
-  
-  digitalWrite(_slave_select, HIGH);
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR
-  Serial.println("Done reading. Data collected.");
-  
-  Serial.println("Character: ");
-  for(int i = 0; i < 54; i++) {
-    Serial.print("0x");
-    Serial.print(character[i], HEX);
-    Serial.print(",");
-  }
-  Serial.println();
-  Serial.println("Test: ");
-  for(int i = 0; i < 54; i++) {
-    Serial.print("0x");
-    Serial.print(test[i], HEX);
-    Serial.print(",");
-  }
-  Serial.println();
-  
-}
-
-
-void MAX7456::write_character(byte addr, char character[]) 
-{
-  // Enable the SPI
-  // Write VM0[3] = 0 to disable the OSD image.
-  Serial.println("Enable SPI, disable OSD output (section)");
-
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = MAX7456_SPCR;  // set SPCR to what we need
-
-  digitalWrite(_slave_select, LOW);
-  MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  MAX7456_spi_transfer(0x00|VERTICAL_SYNC_NEXT_VSYNC); // double check that the other bits can be zero
-  
-  // Write CMAH[7:0]  = xxH  to select the character (0â€“255) to be read
-  MAX7456_spi_transfer(CMAH_WRITE_ADDR);
-  MAX7456_spi_transfer(addr);
-
-  for(int i = 0; i < 54; i++)
-  {
-    // Write CMAL[7:0] = xxH to select the 4-pixel byte (0â€“63) in the character to be read
-    MAX7456_spi_transfer(CMAL_WRITE_ADDR);
-    MAX7456_spi_transfer(i);
-    
-    // Write CMDI[7:0] = xxH to set the pixel values of the selected part of the character
-    MAX7456_spi_transfer(CMDI_WRITE_ADDR);
-    MAX7456_spi_transfer(character[i]);
-  }
-
-  // Write CMM[7:0] = 1010xxxx to write the character data from the shadow RAM to the NVRAM
-  MAX7456_spi_transfer(CMM_WRITE_ADDR);
-  MAX7456_spi_transfer(0b10100000); // Double check that bits 0-3 can be zero
-  
-  // Wait at least 12ms to finish writing
-  delay(150);
-
-  // Write VM0[3] = 1 to enable the OSD image display.
-  MAX7456_spi_transfer(VM0_WRITE_ADDR);
-  MAX7456_spi_transfer(VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE);
-  
-  digitalWrite(_slave_select, HIGH);
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR
-}
-
-byte MAX7456::convert_ascii(int character) {
-// for some reason the MAX7456 does not follow ascii letter
-// placement, so you have to have this odd lookup table
-
-  byte lookup_char;
-  return(character & 0xff);
-  if (character == 32)
-    lookup_char = 0x00; // blank space
-  else if (character == 48)
-    lookup_char = 0x0a; // 0
-  else if ((character > 48) && (character < 58))
-    lookup_char = (character - 48); // 1-9
-  else if ((character > 64) && (character < 90))
-    lookup_char = (character - 54); // A-Z
-  else if ((character > 96) && (character < 123))
-    lookup_char = (character - 60); // a-z
-  else if (character == 34)
-    lookup_char = 0x48; // "
-  else if (character == 39)
-    lookup_char = 0x46; // '
-  else if (character == 40)
-    lookup_char = 0x3f; // (
-  else if (character == 41)
-    lookup_char = 0x40; // )
-  else if (character == 44)
-    lookup_char = 0x45; // ,
-  else if (character == 45)
-    lookup_char = 0x49; // -
-  else if (character == 46)
-    lookup_char = 0x41; // .
-  else if (character == 47)
-    lookup_char = 0x47; // /
-  else if (character == 58)
-    lookup_char = 0x44; // :
-  else if (character == 59)
-    lookup_char = 0x43; // ;
-  else if (character == 60)
-    lookup_char = 0x4a; // <
-  else if (character == 62)
-    lookup_char = 0x4b; // >
-  else if (character == 63)
-    lookup_char = 0x42; // ?
-//  else
-//    lookup_char = 0x00; // out of range, blank space
-
- return (lookup_char);
-}
 

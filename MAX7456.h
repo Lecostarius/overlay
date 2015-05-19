@@ -136,19 +136,18 @@
 //class MAX7456 : public Print
 class MAX7456 {
  public:
-  MAX7456();
-  byte MAX7456_spi_transfer(char data);
-  byte MAX7456_spi_read(volatile char data);
-  void Poke(byte adress, byte data);
-  byte Peek(byte adress);
-  byte ReadDisplay(uint16_t x, uint16_t y);
-  void begin();
-  void begin(byte slave_select);
-  void writeCharLinepos(uint8_t c, uint16_t linepos);
-  void writeCharXY(uint8_t c, uint8_t x, uint8_t y);
-  void reset();
-  void initialize();
-  void show_font();
+  MAX7456(); // Constructor
+  
+  void Poke(byte adress, byte data);    // write "data" into MAX7456's register with adress "adress". Always use Poke and Peek, dont use MAX7456_spi_transfer.
+  byte Peek(byte adress);               // read from the MAX7456's register "adress"
+  byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
+  void begin();                         // initializer: call this once before using the MAX7456. Does the pinModes of the SPI, calls reset()...
+  void begin(byte slave_select);        // initializer: set the slave_select pin not to MAX7456SELECT constant, but to the variable slave_select
+  void writeCharLinepos(uint8_t c, uint16_t linepos);  // writes character byte "c" to position "linepos" (0=left upper edge=)
+  void writeCharXY(uint8_t c, uint8_t x, uint8_t y);   // writes character byte "c" to screen position x,y
+  void reset();                         // make a soft reset of the MAX7456, wait until completed, return
+  void initialize();                    // initialize default values of the MAX7456 like PAL mode, 16 bit mode, autoincrement, backgnd brightness...
+  void show_font();                     // clears screen then prints all 256 different chars with writeChar()
   void write_to_screen(char s[], byte x, byte y, byte blink, byte invert);
   void write_to_screen(char s[], byte x, byte y);
   void write_to_screen(char s[], byte line);
@@ -156,19 +155,19 @@ class MAX7456 {
   size_t write(uint8_t c);
   void writeChar(uint8_t c);
   void writeChar0(uint8_t c, uint8_t a);
-  byte convert_ascii(int character);
-  void offset(int horizontal, int vertical);
-  void clear();
-  void home();
+  void offset(int horizontal, int vertical);  // set the horizontal (-32..31)/vertical (-16..15) offset in pixel. This is where the upper left corner is.
+  void clear();                         // clears screen and sets cursor home
+  void home();                          // sets cursor home (left upper corner)
+
+  /* the following functions set the default mode bits for incremental mode printing of the MAX7456. */
   void blink(byte onoff);
   void blink();
   void noBlink();
   void invert(byte onoff);
   void invert();
   void noInvert();
-  void read_character(byte addr, char character[]);
-  void write_character(byte addr, char character[]);
  private:
+  byte MAX7456_spi_transfer(char data); // shift 8 bit "data" via SPI to the MAX7456 and return its 8 bit response during the same 8 bit shift. Does not set chip select.
   byte MAX7456_SPCR, MAX7456_previous_SPCR; // store the desired and previous SPCR register of the Atmega 
   byte _slave_select; // Atmega pin that is connected to MAX7456 chip select
   byte _char_attributes; // standard character attributes if we do not set any
