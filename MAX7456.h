@@ -153,8 +153,8 @@ class MAX7456 {
   void write_to_screen(char s[], byte line);
   void write_0(uint8_t c);
   size_t write(uint8_t c);
-  void writeChar(uint8_t c);
-  void writeChar0(uint8_t c, uint8_t a);
+  void writeChar(uint8_t c);            // write a char to current cursor position and move cursor 
+  void writeChar0(uint8_t c, uint8_t attributes);   // write one char and its attributes to current cursor position and move cursor
   void offset(int horizontal, int vertical);  // set the horizontal (-32..31)/vertical (-16..15) offset in pixel. This is where the upper left corner is.
   void clear();                         // clears screen and sets cursor home
   void home();                          // sets cursor home (left upper corner)
