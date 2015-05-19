@@ -151,6 +151,16 @@ void MAX7456::show_font() {
   for (int i=0; i < 256; i++) writeChar(i & 0xFF);
 }
 
+/* --------------------------------------------------------------------------
+   Single character printing primitives
+   - writeChar
+   - writeCharWithAttributes
+   
+   - writeCharXY
+   -
+   - writeCharLinepos
+   --------------------------------------------------------------------------- */
+   
 void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
   Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
   Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
@@ -176,7 +186,7 @@ void MAX7456::writeChar(uint8_t c) {
   writeCharLinepos(c, linepos);
 } 
  
-void MAX7456::writeChar0(uint8_t c, uint8_t attributes) {
+void MAX7456::writeCharWithAttributes(uint8_t c, uint8_t attributes) {
   uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
   // compute next cursor position
   if (++_cursor_x >= CURSOR_X_MAX) {

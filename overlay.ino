@@ -221,7 +221,7 @@ void setup() {
   for (uint16_t c=0; c<256;c++) {
     mx->writeChar(c&0xff);
   }    
-  mx->writeChar0(5,0xc0);
+  mx->writeCharWithAttributes(5,0xc0);
   
   
   char charA[128];
