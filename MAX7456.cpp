@@ -19,34 +19,14 @@ MAX7456::MAX7456() {
   _cursor_y = CURSOR_Y_MIN;
 }
 
-// Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
-byte MAX7456::ReadDisplay(uint16_t x, uint16_t y) {
-    byte c;   
-    uint16_t linepos = y * 30 + x; // convert x,y to line position
-    
-    Poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
-    Poke(DMAH_WRITE_ADDR, linepos >> 8); // DMAH bit 1 cleared since linepos is <480
-    Poke(DMAL_WRITE_ADDR, linepos & 0xFF); 
-    c=Peek(DMDO_READ_ADDR);
-    return(c);
-}
-  
-  
-void MAX7456::Poke(byte adress, byte data) {
-  digitalWrite(MAX7456SELECT,LOW); 
-  MAX7456_spi_transfer(adress);
-  MAX7456_spi_transfer(data); 
-  digitalWrite(MAX7456SELECT,HIGH);
-}
-byte MAX7456::Peek(byte adress) {
-  byte retval=0;
-  digitalWrite(MAX7456SELECT,LOW); 
-  MAX7456_spi_transfer(adress);
-  retval=MAX7456_spi_transfer(0xff);
-  digitalWrite(MAX7456SELECT,HIGH);
-  return(retval);
-}
-    
+
+ 
+ /* -----------------------------------------------------------------------------
+  Private functions - not meant to be used by the user:
+   - MAX7456_spi_transfer
+   - writeCharLinepos
+ ------------------------------------------------------------------------------ */
+ 
 // basic SPI transfer: use the Atmega hardware to send and receive one byte
 // over SPI. MAX7456_spi_transfer does NOT set chip select, so it is a bit of
 // a misnomer: it will do SPI data transfer with whatever SPI device is connected
@@ -59,6 +39,38 @@ byte MAX7456::MAX7456_spi_transfer(volatile char data) {
   while (!(SPSR & (1<<SPIF))) ;   // Wait the end of the transmission
   SPCR = MAX7456_previous_SPCR;
   return SPDR;                    // return the received byte
+}
+void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
+  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
+  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  Poke(DMDI_WRITE_ADDR, c);
+}
+
+ /* -----------------------------------------------------------------------------
+  Functions related to initialization of the MAX7456, basic settings, hardware
+  related stuff...
+   - Poke
+   - Peek
+   - begin
+   - reset
+   - initialize
+   - offset
+ ------------------------------------------------------------------------------ */
+void MAX7456::Poke(byte adress, byte data) {
+  digitalWrite(MAX7456SELECT,LOW); 
+  MAX7456_spi_transfer(adress);
+  MAX7456_spi_transfer(data); 
+  digitalWrite(MAX7456SELECT,HIGH);
+}
+
+byte MAX7456::Peek(byte adress) {
+  byte retval=0;
+  digitalWrite(MAX7456SELECT,LOW); 
+  MAX7456_spi_transfer(adress);
+  retval=MAX7456_spi_transfer(0xff);
+  digitalWrite(MAX7456SELECT,HIGH);
+  return(retval);
 }
 
 void MAX7456::begin(byte slave_select) {
@@ -133,6 +145,13 @@ void MAX7456::offset(int horizontal, int vertical) {
   Poke(VOS_WRITE_ADDR,vertical);
  
 }
+ /* -----------------------------------------------------------------------------
+  Cursor setting functions
+   - clear
+   - home
+   - advanceCursor
+   - setCursor
+ ------------------------------------------------------------------------------ */
 
 void MAX7456::clear() {
   Poke(DMM_WRITE_ADDR,CLEAR_display);
@@ -157,17 +176,8 @@ void MAX7456::advanceCursor() {
   }
 }
 
-void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
-  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
-  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
-  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
-  Poke(DMDI_WRITE_ADDR, c);
-}
 
-void MAX7456::writeCharXY(uint8_t c, uint8_t x, uint8_t y) {
-  setCursor(x,y); 
-  writeChar(c); 
-}  
+
 
 void MAX7456::show_font() {
   clear();
@@ -182,6 +192,10 @@ void MAX7456::show_font() {
    --------------------------------------------------------------------------- */
    
 
+void MAX7456::writeCharXY(uint8_t c, uint8_t x, uint8_t y) {
+  setCursor(x,y); 
+  writeChar(c); 
+}  
 
 void MAX7456::writeChar(uint8_t c) {
   writeCharLinepos(c, _cursor_y * 30 + _cursor_x);
@@ -196,7 +210,8 @@ void MAX7456::writeCharWithAttributes(uint8_t c, uint8_t attributes) {
   Poke(DMDI_WRITE_ADDR, attributes);
   advanceCursor();
 } 
- 
+
+/* the following functions set the default mode bits for incremental mode printing of the MAX7456. */ 
 void MAX7456::blink(byte onoff) {
   if (onoff) {
       _char_attributes |= 0x10;
@@ -230,6 +245,19 @@ void MAX7456::noInvert() {
   invert(0);
 }
 
+// Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
+byte MAX7456::ReadDisplay(uint16_t x, uint16_t y) {
+    byte c;   
+    uint16_t linepos = y * 30 + x; // convert x,y to line position
+    
+    Poke(DMM_WRITE_ADDR,0x40); // 8 bit mode
+    Poke(DMAH_WRITE_ADDR, linepos >> 8); // DMAH bit 1 cleared since linepos is <480
+    Poke(DMAL_WRITE_ADDR, linepos & 0xFF); 
+    c=Peek(DMDO_READ_ADDR);
+    return(c);
+}
+  
+  
 
 /* Dead code following */
  
