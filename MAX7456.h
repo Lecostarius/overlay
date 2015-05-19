@@ -143,7 +143,7 @@ class MAX7456 {
   byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
   void begin();                         // initializer: call this once before using the MAX7456. Does the pinModes of the SPI, calls reset()...
   void begin(byte slave_select);        // initializer: set the slave_select pin not to MAX7456SELECT constant, but to the variable slave_select
-  void writeCharLinepos(uint8_t c, uint16_t linepos);  // writes character byte "c" to position "linepos" (0=left upper edge=)
+  
   void writeCharXY(uint8_t c, uint8_t x, uint8_t y);   // writes character byte "c" to screen position x,y
   void reset();                         // make a soft reset of the MAX7456, wait until completed, return
   void initialize();                    // initialize default values of the MAX7456 like PAL mode, 16 bit mode, autoincrement, backgnd brightness...
@@ -169,6 +169,8 @@ class MAX7456 {
   void noInvert();
  private:
   byte MAX7456_spi_transfer(char data); // shift 8 bit "data" via SPI to the MAX7456 and return its 8 bit response during the same 8 bit shift. Does not set chip select.
+  void writeCharLinepos(uint8_t c, uint16_t linepos);  // writes character byte "c" to position "linepos" (0=left upper edge=)
+  
   byte MAX7456_SPCR, MAX7456_previous_SPCR; // store the desired and previous SPCR register of the Atmega 
   byte _slave_select; // Atmega pin that is connected to MAX7456 chip select
   byte _char_attributes; // standard character attributes if we do not set any
