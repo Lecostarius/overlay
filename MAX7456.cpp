@@ -110,11 +110,12 @@ void MAX7456::begin() {
   pinMode(MAX7456_DATAIN, INPUT);
   pinMode(MAX7456_SCK,OUTPUT);
 
-  MAX7456_SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(1<<SPR0);
+  MAX7456_SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(0<<SPR0);
   // configure SPI device on the microcontroller
   // SPIF - SPI interrupt flag
   // WCOL - write collision flag
   // SPI2X - double speed SPI flag
+  // SPR1,0 - clock divider (we have a 16 MHz clock on our ATmega). If 00, divide by 4. If 01, by 16. If 10, by 64. If 11, by 128.
   MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
   SPCR = MAX7456_SPCR;
   SPSR = (0<<SPIF)|(0<<WCOL)|(0<<SPI2X);
