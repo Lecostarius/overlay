@@ -144,33 +144,30 @@ class MAX7456 {
   void initialize();                    // initialize default values of the MAX7456 like PAL mode, 16 bit mode, autoincrement, backgnd brightness...
   void begin();                         // initializer: call this once before using the MAX7456. Does the pinModes of the SPI, calls reset()...
   void begin(byte slave_select);        // initializer: set the slave_select pin not to MAX7456SELECT constant, but to the variable slave_select
-  
-  void writeCharXY(uint8_t c, uint8_t x, uint8_t y);   // writes character byte "c" to screen position x,y
-  byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
-
-  void write_to_screen(char s[], byte x, byte y, byte blink, byte invert);
-  void write_to_screen(char s[], byte x, byte y);
-  void write_to_screen(char s[], byte line);
-  void write_0(uint8_t c);
-
-  void writeChar(uint8_t c);            // write a char to current cursor position and move cursor 
-  void writeCharWithAttributes(uint8_t c, uint8_t attributes);   // write one char and its attributes to current cursor position and move cursor
   void offset(int horizontal, int vertical);  // set the horizontal (-32..31)/vertical (-16..15) offset in pixel. This is where the upper left corner is.
+
   void clear();                         // clears screen and sets cursor home
   void home();                          // sets cursor home (left upper corner)
   void setCursor(uint8_t x, uint8_t y); // sets cursor to (x,y)
   void advanceCursor();                 // advance cursor one position
   
+  void writeCharXY(uint8_t c, uint8_t x, uint8_t y);   // writes character byte "c" to screen position x,y. Shortcut for "setCursor(); writeChar();".
+  void writeChar(uint8_t c);            // write a char to current cursor position and move cursor 
+  void writeCharWithAttributes(uint8_t c, uint8_t attributes);   // write one char and its attributes to current cursor position and move cursor
+
+  void writeString(uint8_t c[]);        // write a sequence of characters to current cursor position (and move cursor). For attributes, see 
+                                        // the functions blink() and invert()
+  
+  byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
+
+
   /* the following functions set the default mode bits for incremental mode printing of the MAX7456. */
   void blink(byte onoff);
-  void blink();
-  void noBlink();
   void invert(byte onoff);
-  void invert();
-  void noInvert();
+
  private:
   byte MAX7456_spi_transfer(char data); // shift 8 bit "data" via SPI to the MAX7456 and return its 8 bit response during the same 8 bit shift. Does not set chip select.
-  void writeCharLinepos(uint8_t c, uint16_t linepos);  // writes character byte "c" to position "linepos" (0=left upper edge=)
+  void writeCharLinepos(uint8_t c, uint16_t linepos);  // writes character byte "c" to position "linepos" (0=left upper edge)
   
   byte MAX7456_SPCR, MAX7456_previous_SPCR; // store the desired and previous SPCR register of the Atmega 
   byte _slave_select; // Atmega pin that is connected to MAX7456 chip select

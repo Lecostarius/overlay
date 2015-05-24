@@ -213,29 +213,12 @@ void MAX7456::blink(byte onoff) {
   }
 }
 
-void MAX7456::blink() {
-  blink(1);
-}
-
-void MAX7456::noBlink() {
-  blink(0);
-}
-
-
 void MAX7456::invert(byte onoff) {
   if (onoff) {
       _char_attributes |= 0x08;
   } else {
       _char_attributes &= ~0x08;
   }
-}
-
-void MAX7456::invert() {
-  invert(1);
-}
-
-void MAX7456::noInvert() {
-  invert(0);
 }
 
 // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
@@ -252,162 +235,7 @@ byte MAX7456::ReadDisplay(uint16_t x, uint16_t y) {
   
   
 
-/* Dead code following */
- 
-  
-// this is probably inefficient, as i simply modified a more general function
-// that wrote arbitrary length strings. need to check modes of writing
-// characters to MAX7456 to see if there's a better way to write one at a time
-void MAX7456::write_0(uint8_t c)
-{
-  unsigned int linepos;
-  byte char_address_hi, char_address_lo;
 
-  if (c == '\n')
-    {
-      _cursor_y++;
-      if (_cursor_y > CURSOR_Y_MAX)
-	_cursor_y = CURSOR_Y_MIN;
-      _cursor_x = CURSOR_X_MIN;
-      return;
-    }
-
-  if (c == '\r')
-    {
-      _cursor_x = CURSOR_X_MIN;
-      return;
-    }
-
-  // To print non-ascii character, this line must either be commented out
-  // or convert_ascii() needs to be modified to make sure it doesn't conflict
-  // with the special characters being printed.
-  // c = convert_ascii(c);
-
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = MAX7456_SPCR;  // set SPCR to what we need
-
-  char_address_hi = 0;
-  char_address_lo = 0;
-    
-  // convert x,y to line position
-  linepos = _cursor_y * 30 + _cursor_x;
-  _cursor_x++;
-  if (_cursor_x >= CURSOR_X_MAX)
-    {
-      _cursor_y++;
-      if (_cursor_y > CURSOR_Y_MAX)
-	_cursor_y = CURSOR_Y_MIN;
-      _cursor_x = CURSOR_X_MIN;
-    }
-
-  
-  // divide in to hi & lo byte
-  char_address_hi = linepos >> 8;
-  char_address_lo = linepos;
-  
-  
-  digitalWrite(_slave_select,LOW);
-
-  MAX7456_spi_transfer(DMM_WRITE_ADDR); //dmm
-  MAX7456_spi_transfer(_char_attributes);
-
-  MAX7456_spi_transfer(DMAH_WRITE_ADDR); // set start address high
-  MAX7456_spi_transfer(char_address_hi);
-
-  MAX7456_spi_transfer(DMAL_WRITE_ADDR); // set start address low
-  MAX7456_spi_transfer(char_address_lo);
-  
-  
-  MAX7456_spi_transfer(DMDI_WRITE_ADDR);
-  MAX7456_spi_transfer(c);
-  
-  MAX7456_spi_transfer(DMDI_WRITE_ADDR);
-  MAX7456_spi_transfer(END_string);
-  
-  MAX7456_spi_transfer(DMM_WRITE_ADDR); //dmm
-  MAX7456_spi_transfer(B00000000);
-
-  digitalWrite(_slave_select,HIGH);
-
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR
-  
-}
-
-
-void MAX7456::write_to_screen(char s[], byte x, byte y) {
-  write_to_screen(s, x, y, 0, 0);
-}
-
-void MAX7456::write_to_screen(char s[], byte line) {
-  write_to_screen(s, 1, line, 0, 0);
-}
-
-
-void MAX7456::write_to_screen(char s[], byte x, byte y, byte blink, byte invert){
-  unsigned int linepos;
-  byte local_count;
-  byte settings, char_address_hi, char_address_lo;
-  byte screen_char;
-
-
-  MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
-  SPCR = MAX7456_SPCR;  // set SPCR to what we need
-
-  local_count = 0;
-
-  char_address_hi = 0;
-  char_address_lo = 0;
-    
-  // convert x,y to line position
-  linepos = y*30+x;
-  
-  // divide in to hi & lo byte
-  char_address_hi = linepos >> 8;
-  char_address_lo = linepos;
-  
-  
-  settings = B00000001;
-  
-  // set blink bit
-  if (blink) {
-    settings |= (1 << 4);       // forces nth bit of x to be 1.  all other bits left alone.
-    //x &= ~(1 << n);      // forces nth bit of x to be 0.  all other bits left alone.  
-  }
-  // set invert bit
-  if (invert){
-    settings |= (1 << 3);       // forces nth bit of x to be 1.  all other bits left alone.
-  }
-  
-  digitalWrite(_slave_select,LOW);
-
-  MAX7456_spi_transfer(DMM_WRITE_ADDR); //dmm
-  MAX7456_spi_transfer(settings);
-
-  MAX7456_spi_transfer(DMAH_WRITE_ADDR); // set start address high
-  MAX7456_spi_transfer(char_address_hi);
-
-  MAX7456_spi_transfer(DMAL_WRITE_ADDR); // set start address low
-  MAX7456_spi_transfer(char_address_lo);
-  
-  
-  while(s[local_count]!='\0') // write out full screen
-  {
-    screen_char = s[local_count];
-    MAX7456_spi_transfer(DMDI_WRITE_ADDR);
-    MAX7456_spi_transfer(screen_char);
-    local_count++;
-  }
-  
-  MAX7456_spi_transfer(DMDI_WRITE_ADDR);
-  MAX7456_spi_transfer(END_string);
-  
-  MAX7456_spi_transfer(DMM_WRITE_ADDR); //dmm
-  MAX7456_spi_transfer(B00000000);
-
-  digitalWrite(_slave_select,HIGH);
-
-  SPCR = MAX7456_previous_SPCR;   // restore SPCR
-} 
 
 
 

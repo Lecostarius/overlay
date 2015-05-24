@@ -168,9 +168,9 @@ void printMCM01() {
   }
 }
 
-void show_font() {
-  clear();
-  for (int i=0; i < 256; i++) writeChar(i & 0xFF);
+void show_font(MAX7456 *mx) {
+  mx->clear();
+  for (int i=0; i < 256; i++) mx->writeChar(i & 0xFF);
 }
 
 void printInitPattern() {
@@ -262,7 +262,7 @@ void loop() {
       case 'R': // Receive MCM file
         receiveMCM();  break;
       case 'f': // show font
-        show_font(); Serial.println("Font printed"); break;
+        show_font(mx); Serial.println("Font printed"); break;
       case '?': // read status
         Serial.print("Status byte (in binary): "); Serial.println(mx->Peek(0xA0),BIN); break;
       case 'w': // write string
