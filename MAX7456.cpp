@@ -14,7 +14,7 @@
 // Constructor
 MAX7456::MAX7456() {
   _slave_select = MAX7456SELECT;
-  _char_attributes = 0x0;
+  _char_attributes = 0x02;
   _cursor_x = CURSOR_X_MIN;
   _cursor_y = CURSOR_Y_MIN;
 }
@@ -212,25 +212,34 @@ void MAX7456::writeCharWithAttributes(uint8_t c, uint8_t attributes) {
 //  This function works nicely if CURSOR_X_MIN is zero. If CURSOR_X_MIN is nonzero, any overwrapping write
 //  will start at x=0 and not at x=CURSOR_X_MIN, so make sure that the string you print is not longer
 //  than the rest of the line. 
-void MAX7456::writeString(const uint8_t c[]) {
+void MAX7456::writeString(const char c[]) {
   uint16_t i=0;
   uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
   Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
   Poke(DMAL_WRITE_ADDR, linepos&0xFF);
   
-  Poke(DMM_WRITE_ADDR, _char_attributes | 0x01); // enter 16 bit mode, auto increment mode
+  Poke(DMM_WRITE_ADDR, _char_attributes | 0x41); // enter auto increment mode
+  //Poke(DMM_WRITE_ADDR, _char_attributes | 0x01); // enter 16 bit mode
   
+  //Poke(DMDI_WRITE_ADDR, 'x'); Poke(DMDI_WRITE_ADDR,'y'); 
   // the i<480 is for safety, if the user gives us a string without zero at the end
-  while(c[i] != 0 && i < 480) {
+
+  while(c[i] != 0 && i < 12) {
     Poke(DMDI_WRITE_ADDR, c[i]);
     i++;
   }
   Poke(DMDI_WRITE_ADDR,0xFF); // send ESC to end auto increment mode
   
-  Poke(DMM_WRITE_ADDR, _char_attributes | 0x40);   // back to 8 bit mode
-  
-  
-  
+  //Poke(DMM_WRITE_ADDR, _char_attributes | 0x40);   // back to 8 bit mode
+   
+}
+ 
+void MAX7456::writeStringSlow(const char c[]) {
+  uint16_t i=0;
+  while(c[i] != 0 && i < 480) {
+    writeChar(c[i]);
+    i++;
+  }
 }
   
 

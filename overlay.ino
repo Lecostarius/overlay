@@ -248,12 +248,18 @@ void setup() {
 void loop() {
   byte c;
   int x;
+  long timeB,timeE;
   int incomingByte;
   
   if (Serial.available() > 0) {
     incomingByte = Serial.read(); Serial.println();
     switch(incomingByte) {  // wait for commands
-    
+      case 'p':
+        timeB=micros(); mx->writeString("Hallo"); timeE=micros(); Serial.print("Time (us): "); Serial.println(timeE-timeB); break;
+      case 'P':
+        timeB=micros(); mx->clear(); show_font(mx); timeE=micros(); Serial.print("Time (us): "); Serial.println(timeE-timeB); break;
+      case 'o':
+        timeB=micros(); mx->writeStringSlow("Hallo"); timeE=micros(); Serial.print("Time (us): "); Serial.println(timeE-timeB); break;
       case 'D': // download font
         printMCM(); break;
       case 'd': // download font, transform 11 to 01
