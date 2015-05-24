@@ -155,7 +155,7 @@ class MAX7456 {
   void writeChar(uint8_t c);            // write a char to current cursor position and move cursor 
   void writeCharWithAttributes(uint8_t c, uint8_t attributes);   // write one char and its attributes to current cursor position and move cursor
 
-  void writeString(uint8_t c[]);        // write a sequence of characters to current cursor position (and move cursor). For attributes, see 
+  void writeString(const uint8_t c[]);        // write a sequence of characters to current cursor position (and move cursor). For attributes, see 
                                         // the functions blink() and invert()
   
   byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))

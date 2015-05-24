@@ -41,7 +41,7 @@ byte MAX7456::MAX7456_spi_transfer(volatile char data) {
   return SPDR;                    // return the received byte
 }
 void MAX7456::writeCharLinepos(uint8_t c, uint16_t linepos) {
-  Poke(DMM_WRITE_ADDR, 0x40); // enter 8 bit mode, no increment mode
+  Poke(DMM_WRITE_ADDR, _char_attributes | 0x40); // enter 8 bit mode, no increment mode
   Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
   Poke(DMAL_WRITE_ADDR, linepos&0xFF);
   Poke(DMDI_WRITE_ADDR, c);
@@ -89,7 +89,7 @@ void MAX7456::reset() {
 // initialize the default parameters for the MAX7456
 // your personal preferences go here
 void MAX7456::initialize() {
-  Poke(DMM_WRITE_ADDR, 0x40); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
+  Poke(DMM_WRITE_ADDR, 0x40 | _char_attributes); // 8 bit operation mode, default for attribute bits is all off, dont clear memory, no auto increment mode
   // set basic mode: enable, PAL, Sync mode, ...
   Poke(VM0_WRITE_ADDR, VERTICAL_SYNC_NEXT_VSYNC|OSD_ENABLE|VIDEO_MODE_PAL|SYNC_MODE_AUTO);
   // set more basic modes: background mode brightness, blinking time, blinking duty cycle:
@@ -203,6 +203,36 @@ void MAX7456::writeCharWithAttributes(uint8_t c, uint8_t attributes) {
   Poke(DMDI_WRITE_ADDR, attributes);
   advanceCursor();
 } 
+
+// writeString is faster than a sequence of writeChar(). It is slightly slower (1 SPI transfer slower) for
+//  strings of 2 chars length, and 2 SPI transfers per character faster generally. Note that the string must
+//  be null-terminated and must not contain the character 0xFF (this is a restriction of the MAX7456). 
+//  This function works nicely if CURSOR_X_MIN is zero. If CURSOR_X_MIN is nonzero, any overwrapping write
+//  will start at x=0 and not at x=CURSOR_X_MIN, so make sure that the string you print is not longer
+//  than the rest of the line. 
+void MAX7456::writeString(const uint8_t c[]) {
+  uint16_t i=0;
+  uint16_t linepos = _cursor_y * 30 + _cursor_x; // convert x,y to line position
+  Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
+  Poke(DMAL_WRITE_ADDR, linepos&0xFF);
+  
+  Poke(DMM_WRITE_ADDR, _char_attributes | 0x01); // enter 16 bit mode, auto increment mode
+  
+  // the i<480 is for safety, if the user gives us a string without zero at the end
+  while(c[i] != 0 && i < 480) {
+    Poke(DMDI_WRITE_ADDR, c[i]);
+    i++;
+  }
+  Poke(DMDI_WRITE_ADDR,0xFF); // send ESC to end auto increment mode
+  
+  Poke(DMM_WRITE_ADDR, _char_attributes | 0x40);   // back to 8 bit mode
+  
+  
+  
+}
+  
+
+
 
 /* the following functions set the default mode bits for incremental mode printing of the MAX7456. */ 
 void MAX7456::blink(byte onoff) {
