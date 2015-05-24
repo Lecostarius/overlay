@@ -204,13 +204,9 @@ void printInitPattern() {
   mx->writeCharXY(0x11,15,15);
   
   mx->writeCharXY(0x86,13,13); mx->writeCharXY(0x87,14,13); mx->writeCharXY(0x88,15,13); 
+}  
   
-  
-  mx->writeCharXY(0x16, 5,5);  
-  mx->writeCharXY('A',1,1);
-  mx->writeCharXY('0',0,0);
-  mx->writeCharXY('1',1,0);
-}
+
   
 void setup() {
   Serial.begin(115200);
@@ -222,14 +218,22 @@ void setup() {
 
   mx->begin();
   mx->offset(31,16); // hori=-32...31, vert=-15..16. void MAX7456::offset(int horizontal, int vertical)
+  mx->clear();
+  mx->invert(1); mx->setCursor(3,2); mx->writeString("MAX7456 terminal utility");
+  mx->invert(0); mx->setCursor(1,4); mx->writeString("Use teraterm to control");
+  mx->setCursor(1,7); mx->writeString("Commands: ? r o p P d D f b");
+  
+  #ifdef UNDEFINED
   mx->home();
   for (uint16_t c=0; c<256;c++) {
     mx->writeChar(c&0xff);
   }    
   mx->writeCharWithAttributes(5,0xc0);
   
-  mx->setCursor(1,10); mx->writeChar('H'); mx->writeChar('a');
-  //mx->writeString((uint8_t *)"Hallo, Welt!");
+  mx->setCursor(1,5); 
+  mx->writeString("MAX7456> Use teraterm to control");
+  printInitPattern();
+  #endif
   
   char charA[128];
   delay(100);
@@ -240,11 +244,18 @@ void setup() {
     }
     Serial.println();
   }
-  printInitPattern();
+  
   Serial.print("MAX7456 >");
 }
 
-
+void TerminalPrint(char *s) {
+  mx->setCursor(1,10); mx->writeString("                            ");
+  mx->setCursor(1,11); mx->writeString("                            ");
+  mx->setCursor(1,12); mx->writeString("                            ");
+  mx->setCursor(1,10); mx->writeString(s);
+}
+  
+  
 void loop() {
   byte c;
   int x;

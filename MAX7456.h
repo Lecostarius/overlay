@@ -3,7 +3,7 @@
 
   based on code from Arduino forum members dfraser and zitron
   http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1220054359
-  modified/extended by kg4wsv
+  modified/extended by kg4wsv and Lecostarius
   gmail: kg4wsv
 */
 
@@ -12,14 +12,13 @@
 #define MAX7456_h
 
 #include <Arduino.h>
-//#include <WConstants.h>
 
 // this is for Arduino Uno
-#define MAX7456_DATAOUT 11//MOSI
-#define MAX7456_DATAIN  12//MISO
-#define MAX7456_SCK  13//sck
-#define MAX7456SELECT 10//ss (chip select)
-#define MAX7456_VSYNC 5// INT0, not used
+//#define MAX7456_DATAOUT 11//MOSI
+//#define MAX7456_DATAIN  12//MISO
+//#define MAX7456_SCK  13//sck
+//#define MAX7456SELECT 10//ss (chip select)
+//#define MAX7456_VSYNC 5// INT0, not used
 
 // this is for 2560
 #define MAX7456_DATAOUT 51//MOSI
@@ -95,8 +94,6 @@
 //MAX7456 commands
 #define CLEAR_display 0x04
 #define CLEAR_display_vert 0x06
-#define END_string 0xff
-
 
 #define WHITE_level_80 0x03
 #define WHITE_level_90 0x02

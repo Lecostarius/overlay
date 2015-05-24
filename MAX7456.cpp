@@ -221,7 +221,7 @@ void MAX7456::writeString(const char c[]) {
   Poke(DMM_WRITE_ADDR, _char_attributes | 0x01); // enter 16 bit mode and auto increment mode
   
   // the i<480 is for safety, if the user gives us a string without zero at the end
-  while(c[i] != 0 && i < 12) {
+  while(c[i] != 0 && i < 480) {
     digitalWrite(MAX7456SELECT,LOW); MAX7456_spi_transfer(c[i]); digitalWrite(MAX7456SELECT,HIGH);
     advanceCursor();
     i++;
