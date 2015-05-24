@@ -140,14 +140,13 @@ class MAX7456 {
   
   void Poke(byte adress, byte data);    // write "data" into MAX7456's register with adress "adress". Always use Poke and Peek, dont use MAX7456_spi_transfer.
   byte Peek(byte adress);               // read from the MAX7456's register "adress"
-  byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
+  void reset();                         // make a soft reset of the MAX7456, wait until completed, return
+  void initialize();                    // initialize default values of the MAX7456 like PAL mode, 16 bit mode, autoincrement, backgnd brightness...
   void begin();                         // initializer: call this once before using the MAX7456. Does the pinModes of the SPI, calls reset()...
   void begin(byte slave_select);        // initializer: set the slave_select pin not to MAX7456SELECT constant, but to the variable slave_select
   
   void writeCharXY(uint8_t c, uint8_t x, uint8_t y);   // writes character byte "c" to screen position x,y
-  void reset();                         // make a soft reset of the MAX7456, wait until completed, return
-  void initialize();                    // initialize default values of the MAX7456 like PAL mode, 16 bit mode, autoincrement, backgnd brightness...
-  void show_font();                     // clears screen then prints all 256 different chars with writeChar()
+  byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
 
   void write_to_screen(char s[], byte x, byte y, byte blink, byte invert);
   void write_to_screen(char s[], byte x, byte y);
