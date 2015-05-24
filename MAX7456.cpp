@@ -206,8 +206,8 @@ void MAX7456::writeCharWithAttributes(uint8_t c, uint8_t attributes) {
   advanceCursor();
 } 
 
-// writeString is faster than a sequence of writeChar(). It is slightly slower (1 SPI transfer slower) for
-//  strings of 2 chars length, and 2 SPI transfers per character faster generally. Note that the string must
+// writeString is faster than a sequence of writeChar(). It is slightly slower for
+//  strings of 1 char length, but 5 SPI transfers per character faster generally. Note that the string must
 //  be null-terminated and must not contain the character 0xFF (this is a restriction of the MAX7456). 
 //  This function works nicely if CURSOR_X_MIN is zero. If CURSOR_X_MIN is nonzero, any overwrapping write
 //  will start at x=0 and not at x=CURSOR_X_MIN, so make sure that the string you print is not longer
@@ -218,22 +218,21 @@ void MAX7456::writeString(const char c[]) {
   Poke(DMAH_WRITE_ADDR, linepos>>8); // As linepos cannot be larger than 480, this will clear bit 1, which means we write character index and not the attributes
   Poke(DMAL_WRITE_ADDR, linepos&0xFF);
   
-  Poke(DMM_WRITE_ADDR, _char_attributes | 0x41); // enter auto increment mode
-  //Poke(DMM_WRITE_ADDR, _char_attributes | 0x01); // enter 16 bit mode
+  Poke(DMM_WRITE_ADDR, _char_attributes | 0x01); // enter 16 bit mode and auto increment mode
   
-  //Poke(DMDI_WRITE_ADDR, 'x'); Poke(DMDI_WRITE_ADDR,'y'); 
   // the i<480 is for safety, if the user gives us a string without zero at the end
-
   while(c[i] != 0 && i < 12) {
-    Poke(DMDI_WRITE_ADDR, c[i]);
+    digitalWrite(MAX7456SELECT,LOW); MAX7456_spi_transfer(c[i]); digitalWrite(MAX7456SELECT,HIGH);
+    advanceCursor();
     i++;
   }
-  Poke(DMDI_WRITE_ADDR,0xFF); // send ESC to end auto increment mode
+  // send 0xFF to end the auto-increment mode
+  digitalWrite(MAX7456SELECT,LOW); MAX7456_spi_transfer(0xFF); digitalWrite(MAX7456SELECT,HIGH);
   
-  //Poke(DMM_WRITE_ADDR, _char_attributes | 0x40);   // back to 8 bit mode
-   
+  Poke(DMM_WRITE_ADDR, _char_attributes | 0x40);   // back to 8 bit mode
 }
  
+// basic, slow writeString method. Honors CURSOR_X_MIN. 
 void MAX7456::writeStringSlow(const char c[]) {
   uint16_t i=0;
   while(c[i] != 0 && i < 480) {

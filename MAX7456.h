@@ -155,9 +155,11 @@ class MAX7456 {
   void writeChar(uint8_t c);            // write a char to current cursor position and move cursor 
   void writeCharWithAttributes(uint8_t c, uint8_t attributes);   // write one char and its attributes to current cursor position and move cursor
 
-  void writeString(const char c[]);        // write a sequence of characters to current cursor position (and move cursor). For attributes, see 
-                                        // the functions blink() and invert()
-  void writeStringSlow(const char c[]) ;
+  void writeString(const char c[]);       // write a sequence of characters to current cursor position (and move cursor). For attributes, see 
+                                          // the functions blink() and invert(). Use this whenever printing >1 character at a time, unless you are
+                                          // printing wrapped lines AND have CURSOR_X_MIN set to nonzero. Note that this uses char instead of unsigned
+                                          // char to allow constant strings ("hallo!")
+  void writeStringSlow(const char c[]) ;  // like writeString(), but slower. Only advantage: honors CURSOR_X_MIN in line wrappings.
   
   byte ReadDisplay(uint16_t x, uint16_t y); // Read one character from character memory (x=0..29, y=0..12 (NTSC) or 0..15 (PAL))
 
