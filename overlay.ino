@@ -228,7 +228,8 @@ void setup() {
   }    
   mx->writeCharWithAttributes(5,0xc0);
   
-  mx->setCursor(1,10); mx->writeString((uint8_t *)"Hallo, Welt!");
+  mx->setCursor(1,10); mx->writeChar('H'); mx->writeChar('a');
+  //mx->writeString((uint8_t *)"Hallo, Welt!");
   
   char charA[128];
   delay(100);

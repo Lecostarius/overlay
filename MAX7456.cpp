@@ -14,7 +14,7 @@
 // Constructor
 MAX7456::MAX7456() {
   _slave_select = MAX7456SELECT;
-  _char_attributes = 0x01;
+  _char_attributes = 0x0;
   _cursor_x = CURSOR_X_MIN;
   _cursor_y = CURSOR_Y_MIN;
 }
@@ -101,7 +101,8 @@ void MAX7456::initialize() {
 }  
   
 void MAX7456::begin() {
-  uint8_t x, spi_junk;
+  uint8_t x;
+  // uint8_t spi_junk;
   
   pinMode(_slave_select,OUTPUT);
   digitalWrite(_slave_select,HIGH); //disable device
@@ -117,7 +118,7 @@ void MAX7456::begin() {
   MAX7456_previous_SPCR = SPCR;  // save SPCR, so we play nice with other SPI peripherals
   SPCR = MAX7456_SPCR;
   SPSR = (0<<SPIF)|(0<<WCOL)|(0<<SPI2X);
-  spi_junk=SPSR;spi_junk=SPDR;delay(25); // do we really need that? TK TODO
+  //spi_junk=SPSR;spi_junk=SPDR;delay(25); // do we really need that? TK TODO
   
   // now configure the MAX7456
   reset();
