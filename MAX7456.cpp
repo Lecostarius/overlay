@@ -177,13 +177,6 @@ void MAX7456::advanceCursor() {
 }
 
 
-
-
-void MAX7456::show_font() {
-  clear();
-  for (int i=0; i < 256; i++) writeChar(i & 0xFF);
-}
-
 /* --------------------------------------------------------------------------
    Single character printing primitives
    - writeChar
