@@ -222,6 +222,7 @@ void setup() {
   mx->invert(1); mx->setCursor(3,2); mx->writeString("MAX7456 terminal utility");
   mx->invert(0); mx->setCursor(1,4); mx->writeString("Use teraterm to control");
   mx->setCursor(1,7); mx->writeString("Commands: ? r o p P d D f b");
+  printInitPattern();
   
   #ifdef UNDEFINED
   mx->home();
