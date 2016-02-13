@@ -11,17 +11,18 @@ I recommend using teraterm.exe to connect to the Arduino. It will
 print a welcome message and then wait for commands. The following commands
 are available:<br>
 p - just print a welcome string "Hallo" to the overlay display with fast printing (16 bit mode, autoincrement). Prints the time taken.<br>
-P - clears the screen, shows the current font of the MAX7456 (all characters).
-o - prints welcome string "Hallo" to the overlay display with slow printing (8 bit mode, no autoincrement). Prints the time taken.
+P - clears the screen, shows the current font of the MAX7456 (all characters).<br>
+o - prints welcome string "Hallo" to the overlay display with slow printing (8 bit mode, no autoincrement). Prints the time taken.<br>
 D - prints the current font from character memory to serial. Activate logging into file and start this,
-    the result can be saved as a .mcm file.
+    the result can be saved as a .mcm file.<br>
 d - prints the current font from character memory to serial, converting "11" bit pairs to "10". Although the meaning
     of 11 and 10 is the same to the MAX7456, it is not the same to many character editor programs on the web, and many
-    of them do not work properly with "11" pixels.
-r - reset. Perform a soft reset of the MAX7456.
-R - Receive MCM file. Use "send file" in teraterm to send a new character set to the character flash memory.
-f - show font. Prints all characters to see what the current font looks like.
-? - read status. Prints the status byte (reads 0xA0)
-w - write string. Type to the terminal, and what you type will be printed to the MAX7456. <RETURN> ends.
-b - experimental only, dont use.
+    of them do not work properly with "11" pixels.<br>
+r - reset. Perform a soft reset of the MAX7456.<br>
+R - Receive MCM file. Use "send file" in teraterm to send a new character set to the character flash memory.<br>
+f - show font. Prints all characters to see what the current font looks like.<br>
+? - read status. Prints the status byte (reads 0xA0)<br>
+w - write string. Type to the terminal, and what you type will be printed to the MAX7456. <RETURN> ends.<br>
+b - experimental only, dont use.<br>
+
 
