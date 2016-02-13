@@ -22,7 +22,7 @@ r - reset. Perform a soft reset of the MAX7456.<br>
 R - Receive MCM file. Use "send file" in teraterm to send a new character set to the character flash memory.<br>
 f - show font. Prints all characters to see what the current font looks like.<br>
 ? - read status. Prints the status byte (reads 0xA0)<br>
-w - write string. Type to the terminal, and what you type will be printed to the MAX7456. <RETURN> ends.<br>
+w - write string. Type to the terminal, and what you type will be printed to the MAX7456. <br>
 b - experimental only, dont use.<br>
 
 
